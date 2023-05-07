@@ -22,7 +22,7 @@ env:
   GKE_CLUSTER: autopilot-cluster-1    
   GKE_ZONE: us-central1   # TODO: update to cluster zone
   DEPLOYMENT_NAME: gke-test # TODO: update to deployment name
-  REPOSITORY: samples # TODO: update to Artifact Registry docker repository
+  REPOSITORY: us.gcr.io
   IMAGE: static-site
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
       with:
         token_format: 'access_token'
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-        service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+        service_account: 'jwnelen@web-scale-386009.iam.gserviceaccount.com'
 
     # Alternative option - authentication via credentials json
     # - id: 'auth'
