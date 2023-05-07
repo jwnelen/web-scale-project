@@ -1,7 +1,7 @@
 import os
 import atexit
 
-from flask import Flask
+from flask import Flask, jsonify
 import redis
 
 
@@ -27,7 +27,10 @@ def create_item(price: int):
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
-    pass
+    return jsonify({
+        "stock": 0,
+        "price": 0
+    })    
 
 
 @app.post('/add/<item_id>/<amount>')

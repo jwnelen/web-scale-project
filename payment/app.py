@@ -1,7 +1,7 @@
 import os
 import atexit
 
-from flask import Flask
+from flask import Flask, jsonify
 import redis
 
 
@@ -24,10 +24,12 @@ atexit.register(close_db_connection)
 def create_user():
     pass
 
-
 @app.get('/find_user/<user_id>')
 def find_user(user_id: str):
-    pass
+    return jsonify({
+        "user_id": user_id,
+        "credit": 0
+    })
 
 
 @app.post('/add_funds/<user_id>/<amount>')

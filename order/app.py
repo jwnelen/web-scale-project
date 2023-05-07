@@ -1,7 +1,7 @@
 import os
 import atexit
 
-from flask import Flask
+from flask import Flask, jsonify
 import redis
 
 
@@ -41,10 +41,17 @@ def add_item(order_id, item_id):
 def remove_item(order_id, item_id):
     pass
 
-
 @app.get('/find/<order_id>')
 def find_order(order_id):
-    pass
+    # return a json with the order information
+    return jsonify({
+        "order_id": order_id,
+        "paid": False,
+        "items": [],
+        "user_id": 1,
+        "total_cost": 0
+    })
+    
 
 
 @app.post('/checkout/<order_id>')
