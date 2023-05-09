@@ -1,10 +1,14 @@
 import os
 import atexit
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, jsonify
 import pymongo as mongo
 
-load_dotenv("../env/order_mongo.env")
+if os.environ.get("FLASK_DEBUG"):
+    print('loading local env')
+    load_dotenv("../env/order_mongo.env")
+else:
+    print('loading prod env')
 
 gateway_url = os.environ['GATEWAY_URL']
 
@@ -23,7 +27,14 @@ collection = db["orders"]
 def close_db_connection():
     client.close()
 
+
 atexit.register(close_db_connection)
+
+
+@app.route("/")
+def hello():
+    return "Hello World!"
+
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
@@ -44,10 +55,19 @@ def add_item(order_id, item_id):
 def remove_item(order_id, item_id):
     pass
 
+
 @app.get('/find/<order_id>')
 def find_order(order_id):
+    # return jsonify({
+    #     "order_id": order_id,
+    #     "paid": False,
+    #     "items": [],
+    #     "user_id": 1,
+    #     "total_cost": 0
+    # })
     result = list(collection.find({}, {"_id": 0}))
     return result
+
 
 @app.post('/checkout/<order_id>')
 def checkout(order_id):

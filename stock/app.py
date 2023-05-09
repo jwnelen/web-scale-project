@@ -1,10 +1,14 @@
 import os
 import atexit
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, jsonify
 import pymongo as mongo
 
-load_dotenv("../env/stock_mongo.env")
+if os.environ.get("FLASK_DEBUG"):
+    print('loading local env')
+    load_dotenv("../env/stock_mongo.env")
+else:
+    print('loading prod env')
 
 app = Flask("stock-service")
 
@@ -25,6 +29,9 @@ def close_db_connection():
 
 atexit.register(close_db_connection)
 
+@app.route("/")
+def hello():
+    return "Hello World!"
 
 @app.post('/item/create/<price>')
 def create_item(price: int):
@@ -33,9 +40,12 @@ def create_item(price: int):
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
-    result = list(collection.find({}, {"_id": 0}))
-    return result
-
+    return jsonify({
+        "stock": 0,
+        "price": 0
+    })
+    # result = list(collection.find({}, {"_id": 0}))
+    # return result
 
 
 @app.post('/add/<item_id>/<amount>')
