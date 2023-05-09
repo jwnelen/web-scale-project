@@ -1,16 +1,22 @@
 import os
 import atexit
+from dotenv import load_dotenv
+from flask import Flask
+import pymongo as mongo
 
-from flask import Flask, jsonify
-import redis
-
+load_dotenv("../env/payment_mongo.env")
 
 app = Flask("payment-service")
 
-db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
-                              port=int(os.environ['REDIS_PORT']),
-                              password=os.environ['REDIS_PASSWORD'],
-                              db=int(os.environ['REDIS_DB']))
+client: mongo.MongoClient = mongo.MongoClient(
+    host=os.environ['MONGO_HOST'],
+    port=int(os.environ['MONGO_PORT']),
+    username=os.environ['MONGO_USERNAME'],
+    password=os.environ['MONGO_PASSWORD'],
+)
+
+db = client[os.environ['MONGO_DB']]
+collection = db["payments"]
 
 
 def close_db_connection():
@@ -26,10 +32,8 @@ def create_user():
 
 @app.get('/find_user/<user_id>')
 def find_user(user_id: str):
-    return jsonify({
-        "user_id": user_id,
-        "credit": 0
-    })
+    result = list(collection.find({}, {"_id": 0}))
+    return result
 
 
 @app.post('/add_funds/<user_id>/<amount>')
