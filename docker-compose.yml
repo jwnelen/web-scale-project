@@ -18,12 +18,7 @@ services:
     env_file:
       - env/order_mongo.env
 
-  mongodb_container:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data_container:/data/db
+
 
   stock-service:
     build: ./stock
@@ -38,6 +33,34 @@ services:
     command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
     env_file:
       - env/payment_mongo.env
+
+  mongodb_container:
+    image: mongo:latest
+    container_name: mongodb_container
+    ports:
+      - "0.0.0.0:27017:27017"
+    volumes:
+      - mongodb_data_container:/data/db
+    networks:
+      - MONGO
+  
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb_container
+      ME_CONFIG_MONGODB_PORT: "27017"
+    ports:
+      - "0.0.0.0:8081:8081"
+    networks:
+      - MONGO
+    depends_on:
+      - mongodb_container
+    restart: unless-stopped
+
+networks:
+  MONGO:
+    name: MONGO
 
 volumes:
   mongodb_data_container:
