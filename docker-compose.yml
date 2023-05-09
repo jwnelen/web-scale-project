@@ -15,30 +15,18 @@ services:
       - GATEWAY_URL=http://gateway:80
     command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
     env_file:
-      - env/order_redis.env
-
-  order-db:
-    image: redis:latest
-    command: redis-server --requirepass redis --maxmemory 512mb
+      - env/order_mongo.env
 
   stock-service:
     build: ./stock
     image: stock:latest
     command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
     env_file:
-      - env/stock_redis.env
-
-  stock-db:
-    image: redis:latest
-    command: redis-server --requirepass redis --maxmemory 512mb
+      - env/stock_mongo.env
 
   payment-service:
     build: ./payment
     image: user:latest
     command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
     env_file:
-      - env/payment_redis.env
-
-  payment-db:
-    image: redis:latest
-    command: redis-server --requirepass redis --maxmemory 512mb
+      - env/payment_mongo.env
