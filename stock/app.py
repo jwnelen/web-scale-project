@@ -20,7 +20,7 @@ collection = db["items"]
 
 
 def close_db_connection():
-    db.close()
+    client.close()
 
 
 atexit.register(close_db_connection)
