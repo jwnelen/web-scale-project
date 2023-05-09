@@ -22,7 +22,8 @@ client: mongo.MongoClient = mongo.MongoClient(
 )
 
 db = client[os.environ['MONGO_DB']]
-collection = db["orders"]
+orders_collection = db["orders"]
+users_collection = db["users"]
 
 def close_db_connection():
     client.close()
@@ -38,7 +39,16 @@ def hello():
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
-    pass
+    u = {
+        "user_id": user_id,
+        "first_name": "John",
+        "last_name": "Doe",
+    }
+    res = users_collection.insert_one(u)
+    
+    u.update({"_id": str(res.inserted_id)})
+    print(u)
+    return u
 
 
 @app.delete('/remove/<order_id>')
@@ -65,7 +75,7 @@ def find_order(order_id):
     #     "user_id": 1,
     #     "total_cost": 0
     # })
-    result = list(collection.find({}, {"_id": 0}))
+    result = list(users_collection.find({}, {"_id": 0}))
     return result
 
 
