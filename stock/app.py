@@ -29,9 +29,11 @@ def close_db_connection():
 
 atexit.register(close_db_connection)
 
+
 @app.route("/")
 def hello():
     return "Hello World!"
+
 
 @app.post('/item/create/<price>')
 def create_item(price: int):

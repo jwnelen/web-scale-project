@@ -39,16 +39,7 @@ def hello():
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
-    u = {
-        "user_id": user_id,
-        "first_name": "John",
-        "last_name": "Doe",
-    }
-    res = users_collection.insert_one(u)
-    
-    u.update({"_id": str(res.inserted_id)})
-    print(u)
-    return u
+    pass
 
 
 @app.delete('/remove/<order_id>')

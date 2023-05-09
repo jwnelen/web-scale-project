@@ -20,7 +20,8 @@ client: mongo.MongoClient = mongo.MongoClient(
 )
 
 db = client[os.environ['MONGO_DB']]
-collection = db["payments"]
+collection_payments = db["payments"]
+collection_users = db["users"]
 
 
 def close_db_connection():
@@ -34,9 +35,16 @@ atexit.register(close_db_connection)
 def hello():
     return "Hello World!"
 
+
 @app.post('/create_user')
 def create_user():
-    pass
+    u = {
+        "first_name": "John",
+        "last_name": "Doe",
+    }
+    res = collection_users.insert_one(u)
+    u.update({"_id": str(res.inserted_id)})
+    return u
 
 
 @app.get('/find_user/<user_id>')

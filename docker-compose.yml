@@ -12,27 +12,36 @@ services:
     build: ./order
     image: order:latest
     environment:
-      - GATEWAY_URL=http://gateway:80
-      - MONGO_HOST=mongodb_container
+      GATEWAY_URL: http://gateway:80
+      MONGO_HOST: mongodb_container
+      MONGO_PORT: "27017"
+      MONGO_DB: order-db
     command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
     env_file:
       - env/order_mongo.env
+    depends_on:
+      - mongodb_container
 
-
-
-  stock-service:
-    build: ./stock
-    image: stock:latest
-    command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
-    env_file:
-      - env/stock_mongo.env
-
+#  stock-service:
+#    build: ./stock
+#    image: stock:latest
+#    command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
+#    env_file:
+#      - env/stock_mongo.env
+#
   payment-service:
     build: ./payment
     image: user:latest
+    environment:
+      GATEWAY_URL: http://gateway:80
+      MONGO_HOST: mongodb_container
+      MONGO_PORT: "27017"
+      MONGO_DB: payments-db
     command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
     env_file:
       - env/payment_mongo.env
+    depends_on:
+      - mongodb_container
 
   mongodb_container:
     image: mongo:latest
@@ -41,8 +50,6 @@ services:
       - "0.0.0.0:27017:27017"
     volumes:
       - mongodb_data_container:/data/db
-    networks:
-      - MONGO
   
   mongo-express:
     image: mongo-express:latest
@@ -52,15 +59,9 @@ services:
       ME_CONFIG_MONGODB_PORT: "27017"
     ports:
       - "0.0.0.0:8081:8081"
-    networks:
-      - MONGO
     depends_on:
       - mongodb_container
     restart: unless-stopped
-
-networks:
-  MONGO:
-    name: MONGO
 
 volumes:
   mongodb_data_container:
