@@ -7,6 +7,10 @@ services:
       - ./gateway_nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8000:80"
+    depends_on:
+      - order-service
+      - stock-service
+      - payment-service
 
   order-service:
     build: ./order
@@ -22,22 +26,27 @@ services:
     depends_on:
       - mongodb_container
 
-#  stock-service:
-#    build: ./stock
-#    image: stock:latest
-#    command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
-#    env_file:
-#      - env/stock_mongo.env
-#
-  payment-service:
-    build: ./payment
-    image: user:latest
+  stock-service:
+    build: ./stock
+    image: stock:latest
+    command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
     environment:
-      GATEWAY_URL: http://gateway:80
       MONGO_HOST: mongodb_container
       MONGO_PORT: "27017"
       MONGO_DB: payments-db
+    env_file:
+      - env/stock_mongo.env
+    depends_on:
+      - mongodb_container
+
+  payment-service:
+    build: ./payment
+    image: user:latest
     command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
+    environment:
+      MONGO_HOST: mongodb_container
+      MONGO_PORT: "27017"
+      MONGO_DB: payments-db
     env_file:
       - env/payment_mongo.env
     depends_on:
