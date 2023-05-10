@@ -1,5 +1,8 @@
 import os
 import atexit
+from uuid import UUID
+
+from bson import ObjectId
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 import pymongo as mongo
@@ -20,7 +23,7 @@ client: mongo.MongoClient = mongo.MongoClient(
 )
 
 db = client[os.environ['MONGO_DB']]
-collection = db["items"]
+items_collection = db["items"]
 
 
 def close_db_connection():
@@ -30,31 +33,28 @@ def close_db_connection():
 atexit.register(close_db_connection)
 
 
-@app.route("/")
-def hello():
-    return "Hello World!"
-
-
 @app.post('/item/create/<price>')
 def create_item(price: int):
-    pass
+    p = int(price)
+    result = items_collection.insert_one({"price": p, "stock": 0})
+    return {"item_id": str(result.inserted_id)}
 
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
-    return jsonify({
-        "stock": 0,
-        "price": 0
-    })
-    # result = list(collection.find({}, {"_id": 0}))
-    # return result
+    result = items_collection.find_one({"_id": ObjectId(item_id)}, {"_id": 0})
+    return result
 
 
 @app.post('/add/<item_id>/<amount>')
 def add_stock(item_id: str, amount: int):
-    pass
+    a = int(amount)
+    res = items_collection.update_one({"_id": ObjectId(item_id)}, {"$inc": {"stock": a}})
+    return {"succes": res.acknowledged}
 
 
 @app.post('/subtract/<item_id>/<amount>')
 def remove_stock(item_id: str, amount: int):
-    pass
+    a = int(amount)
+    res = items_collection.update_one({"_id": ObjectId(item_id)}, {"$inc": {"stock": -a}})
+    return {"succes": res.acknowledged}
