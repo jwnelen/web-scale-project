@@ -1,10 +1,13 @@
 import os
 import atexit
 
+import requests as requests
 from bson import ObjectId
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 import pymongo as mongo
+
+app = Flask("order-service")
 
 if os.environ.get("FLASK_DEBUG"):
     print('loading local env')
@@ -14,7 +17,6 @@ else:
 
 gateway_url = os.environ['GATEWAY_URL']
 
-app = Flask("order-service")
 
 client: mongo.MongoClient = mongo.MongoClient(
     host=os.environ['MONGO_HOST'],
@@ -25,6 +27,7 @@ client: mongo.MongoClient = mongo.MongoClient(
 
 db = client[os.environ['MONGO_DB']]
 orders_collection = db["orders"]
+
 
 def close_db_connection():
     client.close()
@@ -51,9 +54,16 @@ def remove_order(order_id):
     r = orders_collection.delete_one({"_id": ObjectId(order_id)})
     return {"success": r.acknowledged}
 
+
 @app.post('/addItem/<order_id>/<item_id>')
 def add_item(order_id, item_id):
-    pass
+    print('adding item')
+    r = orders_collection.update_one({"_id": ObjectId(order_id)}, {"$push": {"items": item_id}})
+    # # stock-service
+    url = os.environ["STOCK_SERVICE_URL"]
+    r2 = requests.post(f'{url}/subtract/{item_id}/1')
+    result = r.acknowledged & r2.json()["success"]
+    return {"success": result}
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')

@@ -50,11 +50,11 @@ def find_item(item_id: str):
 def add_stock(item_id: str, amount: int):
     a = int(amount)
     res = items_collection.update_one({"_id": ObjectId(item_id)}, {"$inc": {"stock": a}})
-    return {"succes": res.acknowledged}
+    return {"success": res.acknowledged}
 
 
 @app.post('/subtract/<item_id>/<amount>')
 def remove_stock(item_id: str, amount: int):
     a = int(amount)
     res = items_collection.update_one({"_id": ObjectId(item_id)}, {"$inc": {"stock": -a}})
-    return {"succes": res.acknowledged}
+    return {"success": res.acknowledged}

@@ -17,6 +17,7 @@ services:
     image: order:latest
     environment:
       GATEWAY_URL: http://gateway:80
+      STOCK_SERVICE_URL: http://stock-service:5000
       MONGO_HOST: mongodb_container
       MONGO_PORT: "27017"
       MONGO_DB: order-db
@@ -33,7 +34,7 @@ services:
     environment:
       MONGO_HOST: mongodb_container
       MONGO_PORT: "27017"
-      MONGO_DB: payments-db
+      MONGO_DB: stock-db
     env_file:
       - env/stock_mongo.env
     depends_on:
