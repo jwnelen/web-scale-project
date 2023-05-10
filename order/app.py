@@ -16,7 +16,7 @@ else:
     print('loading prod env')
 
 gateway_url = os.environ['GATEWAY_URL']
-
+stock_url = os.environ["STOCK_SERVICE_URL"]
 
 client: mongo.MongoClient = mongo.MongoClient(
     host=os.environ['MONGO_HOST'],
@@ -57,31 +57,23 @@ def remove_order(order_id):
 
 @app.post('/addItem/<order_id>/<item_id>')
 def add_item(order_id, item_id):
-    print('adding item')
-    r = orders_collection.update_one({"_id": ObjectId(order_id)}, {"$push": {"items": item_id}})
-    # # stock-service
-    url = os.environ["STOCK_SERVICE_URL"]
-    r2 = requests.post(f'{url}/subtract/{item_id}/1')
-    result = r.acknowledged & r2.json()["success"]
+    orders_update = orders_collection.update_one({"_id": ObjectId(order_id)}, {"$push": {"items": item_id}})
+    stock_update = requests.post(f'{stock_url}/subtract/{item_id}/1')
+    result = orders_update.acknowledged & stock_update.json()["success"]
     return {"success": result}
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')
 def remove_item(order_id, item_id):
-    pass
+    orders_update = orders_collection.update_one({"_id": ObjectId(order_id)}, {"$pull": {"items": item_id}})
+    stock_update = requests.post(f'{stock_url}/add/{item_id}/1')
+    result = orders_update.acknowledged & stock_update.json()["success"]
+    return {"success": result}
 
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
-    # return jsonify({
-    #     "order_id": order_id,
-    #     "paid": False,
-    #     "items": [],
-    #     "user_id": 1,
-    #     "total_cost": 0
-    # })
-    result = list(users_collection.find({}, {"_id": 0}))
-    return result
+    return orders_collection.find({"_id": ObjectId(order_id)}, {"_id": 0})
 
 
 @app.post('/checkout/<order_id>')
