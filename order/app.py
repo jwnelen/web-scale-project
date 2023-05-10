@@ -1,5 +1,7 @@
 import os
 import atexit
+
+from bson import ObjectId
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 import pymongo as mongo
@@ -23,7 +25,6 @@ client: mongo.MongoClient = mongo.MongoClient(
 
 db = client[os.environ['MONGO_DB']]
 orders_collection = db["orders"]
-users_collection = db["users"]
 
 def close_db_connection():
     client.close()
@@ -32,20 +33,23 @@ def close_db_connection():
 atexit.register(close_db_connection)
 
 
-@app.route("/")
-def hello():
-    return "Hello World!"
-
-
 @app.post('/create/<user_id>')
 def create_order(user_id):
-    pass
+    new_order = {
+        "paid": False,
+        "items": [],
+        "user_id": user_id,
+        "total_cost": 0
+    }
+    result = orders_collection.insert_one(new_order)
+    new_order["_id"] = str(result.inserted_id)
+    return new_order
 
 
 @app.delete('/remove/<order_id>')
 def remove_order(order_id):
-    pass
-
+    r = orders_collection.delete_one({"_id": ObjectId(order_id)})
+    return {"success": r.acknowledged}
 
 @app.post('/addItem/<order_id>/<item_id>')
 def add_item(order_id, item_id):
