@@ -4,7 +4,7 @@ import atexit
 import requests as requests
 from bson import ObjectId
 from dotenv import load_dotenv
-from flask import Flask, jsonify
+from flask import Flask, render_template
 import pymongo as mongo
 
 app = Flask("order-service")
@@ -34,6 +34,17 @@ def close_db_connection():
 
 
 atexit.register(close_db_connection)
+
+
+@app.route("/")
+def index():
+    return render_template("index.html", orders=all_orders())
+
+
+@app.route("/order/<order_id>")
+def order(order_id):
+    o = find_order(order_id)
+    return render_template("order.html", order=o)
 
 
 @app.post('/create/<user_id>')
@@ -73,9 +84,13 @@ def remove_item(order_id, item_id):
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
-    return orders_collection.find({"_id": ObjectId(order_id)}, {"_id": 0})
+    return orders_collection.find_one({"_id": ObjectId(order_id)}, {"_id": 0})
 
 
 @app.post('/checkout/<order_id>')
 def checkout(order_id):
     pass
+
+
+def all_orders():
+    return list(orders_collection.find({}))
