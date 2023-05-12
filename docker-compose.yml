@@ -12,56 +12,33 @@ services:
     build: ./order
     image: order:latest
     environment:
-      GATEWAY_URL: http://gateway:80
-      MONGO_HOST: mongodb_container
-      MONGO_PORT: "27017"
-      MONGO_DB: order-db
+      - GATEWAY_URL=http://gateway:80
     command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
     env_file:
-      - env/order_mongo.env
-    depends_on:
-      - mongodb_container
+      - env/order_redis.env
 
-#  stock-service:
-#    build: ./stock
-#    image: stock:latest
-#    command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
-#    env_file:
-#      - env/stock_mongo.env
-#
+  order-db:
+    image: redis:latest
+    command: redis-server --requirepass redis --maxmemory 512mb
+
+  stock-service:
+    build: ./stock
+    image: stock:latest
+    command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
+    env_file:
+      - env/stock_redis.env
+
+  stock-db:
+    image: redis:latest
+    command: redis-server --requirepass redis --maxmemory 512mb
+
   payment-service:
     build: ./payment
     image: user:latest
-    environment:
-      GATEWAY_URL: http://gateway:80
-      MONGO_HOST: mongodb_container
-      MONGO_PORT: "27017"
-      MONGO_DB: payments-db
     command: gunicorn -b 0.0.0.0:5000 app:app -w 1 --timeout 10
     env_file:
-      - env/payment_mongo.env
-    depends_on:
-      - mongodb_container
+      - env/payment_redis.env
 
-  mongodb_container:
-    image: mongo:latest
-    container_name: mongodb_container
-    ports:
-      - "0.0.0.0:27017:27017"
-    volumes:
-      - mongodb_data_container:/data/db
-  
-  mongo-express:
-    image: mongo-express:latest
-    container_name: mongo-express
-    environment:
-      ME_CONFIG_MONGODB_SERVER: mongodb_container
-      ME_CONFIG_MONGODB_PORT: "27017"
-    ports:
-      - "0.0.0.0:8081:8081"
-    depends_on:
-      - mongodb_container
-    restart: unless-stopped
-
-volumes:
-  mongodb_data_container:
+  payment-db:
+    image: redis:latest
+    command: redis-server --requirepass redis --maxmemory 512mb
