@@ -1,9 +1,11 @@
 import os
 import atexit
 from dotenv import load_dotenv
-from flask import Flask, jsonify
+from flask import Flask, jsonify, make_response, url_for
 import redis
 import sys
+import requests
+import socket
 
 
 gateway_url = os.environ['GATEWAY_URL']
@@ -14,7 +16,6 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               port=int(os.environ['REDIS_PORT']),
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
-
 
 def close_db_connection():
     db.close()
@@ -30,47 +31,40 @@ def create_order(user_id):
     db.hset(f'order_id:{order_id}', 'paid', 0)
     db.hset(f'order_id:{order_id}', 'items', "")
     db.hset(f'order_id:{order_id}', 'total_cost', 0)
-    return jsonify({"order_id": order_id})
+
+    response = jsonify({"order_id": order_id})
+    response.status_code = 200
+    return response
 
 
 @app.delete('/remove/<order_id>')
 def remove_order(order_id):
+    response = make_response("")
     db.hdel(f"order_id:{order_id}", "user_id")
-    return jsonify({'status_code': 200})
+    response.status_code = 200
+    return response
 
 
 @app.post('/addItem/<order_id>/<item_id>')
 def add_item(order_id, item_id):
+    response = make_response("")
     order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
     order_items += str(item_id)+","
     db.hset(f'order_id:{order_id}', 'items', order_items)
 
-    total_cost = 0
-    for item in order_items.split(","):
-        result = db.hget(f'item_id:{item}', 'cost')
-        if result != None:
-            total_cost += int(result.decode("utf-8"))
-
-    db.hset(f'order_id:{order_id}', 'total_cost', total_cost)
-
-    return jsonify({'status_code': 200})
+    response.status_code = 200
+    return response
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')
 def remove_item(order_id, item_id):
+    response = make_response("")
     order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
     order_items = str.replace(order_items, str(item_id)+",", "")
     db.hset(f'order_id:{order_id}', 'items', order_items)
 
-    total_cost = 0
-    for item in order_items.split(","):
-        result = db.hget(f'item_id:{item}', 'cost')
-        if result != None:
-            total_cost += int(result.decode("utf-8"))
-
-    db.hset(f'order_id:{order_id}', 'total_cost', total_cost)
-
-    return jsonify({'status_code': 200})
+    response.status_code = 200
+    return response
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
@@ -85,4 +79,33 @@ def find_order(order_id):
 
 @app.post('/checkout/<order_id>')
 def checkout(order_id):
-    return jsonify({'status_code': 400})
+    response = make_response("")
+
+    order = db.hgetall(f'order_id:{order_id}')
+    items = order[b'items'].decode("utf-8")
+
+    total_cost = 0
+    for item in items.split(","):
+        if item == '':
+            continue
+        result = requests.get(f"{gateway_url}/stock/find/{item}").json()
+
+        if result != None:
+            total_cost += int(result['price'])
+
+    payment = requests.post(f"{gateway_url}/payment/pay/{order[b'user_id'].decode('utf-8')}/{order_id}/{total_cost}", json={"total_cost": total_cost, "order_id": order_id})
+
+    if payment.status_code != 200:
+        response.status_code = payment.status_code
+        return response
+    
+    for item in items.split(","):
+        if item == '':
+            continue
+        subtract = requests.post(f"{gateway_url}/stock/subtract/{item}/1")
+        if subtract.status_code != 200:
+            response.status_code = subtract.status_code
+            return response
+        
+    response.status_code = 200
+    return response

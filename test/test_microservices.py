@@ -24,9 +24,8 @@ class TestMicroservices(unittest.TestCase):
         stock_after_add: int = tu.find_item(item_id)['stock']
         self.assertEqual(stock_after_add, 50)
 
-        # Test /stock/subtract/<item_id>/<number>
+        # Test /stock/subtract/<item_id>/<number>        
         over_subtract_stock_response = tu.subtract_stock(item_id, 200)
-        print(over_subtract_stock_response, " @@@@@")
         self.assertTrue(tu.status_code_is_failure(int(over_subtract_stock_response)))
 
         subtract_stock_response = tu.subtract_stock(item_id, 15)
@@ -104,8 +103,10 @@ class TestMicroservices(unittest.TestCase):
 
         add_item_response = tu.add_item_to_order(order_id, item_id1)
         self.assertTrue(tu.status_code_is_success(add_item_response))
+
         add_item_response = tu.add_item_to_order(order_id, item_id2)
         self.assertTrue(tu.status_code_is_success(add_item_response))
+        
         subtract_stock_response = tu.subtract_stock(item_id2, 1)
         self.assertTrue(tu.status_code_is_success(subtract_stock_response))
 
