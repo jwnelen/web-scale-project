@@ -1,0 +1,3 @@
+omJeroen: Checked if mongoDB was a better option than Redis by also implementing it. It was not really a better option. Also started a really small frontend to show the data.
+Raphael: Basic implementation of Redis.
+Remy: Investing how the deployment would work.
