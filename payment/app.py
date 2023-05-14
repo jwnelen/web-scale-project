@@ -2,30 +2,20 @@ import os
 import atexit
 from dotenv import load_dotenv
 from flask import Flask, jsonify
-import pymongo as mongo
+import redis
 
-if os.environ.get("FLASK_DEBUG"):
-    print('loading local env')
-    load_dotenv("../env/payment_mongo.env")
-else:
-    print('loading prod env')
+
 
 app = Flask("payment-service")
 
-client: mongo.MongoClient = mongo.MongoClient(
-    host=os.environ['MONGO_HOST'],
-    port=int(os.environ['MONGO_PORT']),
-    username=os.environ['MONGO_USERNAME'],
-    password=os.environ['MONGO_PASSWORD'],
-)
-
-db = client[os.environ['MONGO_DB']]
-collection_payments = db["payments"]
-collection_users = db["users"]
+db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
+                              port=int(os.environ['REDIS_PORT']),
+                              password=os.environ['REDIS_PASSWORD'],
+                              db=int(os.environ['REDIS_DB']))
 
 
 def close_db_connection():
-    client.close()
+    db.close()
 
 
 atexit.register(close_db_connection)
@@ -38,40 +28,48 @@ def hello():
 
 @app.post('/create_user')
 def create_user():
-    u = {
-        "first_name": "John",
-        "last_name": "Doe",
-    }
-    res = collection_users.insert_one(u)
-    u.update({"_id": str(res.inserted_id)})
-    return u
+    user_id = db.incr('user_count')
+    user = {"user_id": user_id}
+    db.hset(f"user_id:{user_id}", "credit", 0)
+    return jsonify(user)
 
 
 @app.get('/find_user/<user_id>')
 def find_user(user_id: str):
-    return jsonify({
-        "user_id": user_id,
-        "credit": 0
-    })
-    # result = list(collection.find({}, {"_id": 0}))
-    # return result
+    user_credit = int(db.hget(f"user_id:{user_id}", "credit").decode("utf-8"))
+    return jsonify({"user_id": user_id, "credit": user_credit})
 
 
 @app.post('/add_funds/<user_id>/<amount>')
 def add_credit(user_id: str, amount: int):
-    pass
+    db.hincrby(f"user_id:{user_id}", "credit", int(amount))
+    return jsonify({"done": True})
 
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def remove_credit(user_id: str, order_id: str, amount: int):
-    pass
+    #TODO what is order_id used for???
+    amount = int(amount)
+    credit = int(db.hget(f'user_id:{user_id}', 'credit').decode('utf-8'))
+    if credit < amount:
+        return jsonify({"status_code": 400})
+    credit -= amount
+    db.hset(f'user_id:{user_id}', 'credit', credit)
+    return jsonify({"status_code": 200})
 
 
 @app.post('/cancel/<user_id>/<order_id>')
 def cancel_payment(user_id: str, order_id: str):
-    pass
+    status = db.hget(f'order_id:{order_id}', 'paid').decode('utf-8')
+    if status == 1:
+        db.hset(f'order_id:{order_id}', 'paid', 0)
+        return jsonify({"status_code": 200})
+    
+    # return failure if we try to cancel payment for order which is not yet paid ?
+    return jsonify({"status_code": 400})
 
 
 @app.post('/status/<user_id>/<order_id>')
 def payment_status(user_id: str, order_id: str):
-    pass
+    status = db.hget(f'order_id:{order_id}', 'paid').decode('utf-8')
+    return jsonify({"paid": status})
