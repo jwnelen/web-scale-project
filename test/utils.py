@@ -1,10 +1,10 @@
 import requests
 
 # Minikube
-#ORDER_URL = STOCK_URL = PAYMENT_URL = "http://127.0.0.1:80"
+ORDER_URL = STOCK_URL = PAYMENT_URL = "http://127.0.0.1:80"
 
 # GKE
-ORDER_URL = STOCK_URL = PAYMENT_URL = "http://34.90.171.106:80"
+#ORDER_URL = STOCK_URL = PAYMENT_URL = "http://34.90.171.106:80"
 
 
 ########################################################################################################################
