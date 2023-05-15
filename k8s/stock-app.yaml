@@ -28,6 +28,7 @@ spec:
       containers:
         - name: stock
           image: stock:latest
+          imagePullPolicy: IfNotPresent
           resources:
             limits:
               memory: "1Gi"
@@ -47,4 +48,4 @@ spec:
             - name: REDIS_PASSWORD
               value: "redis"
             - name: REDIS_DB
-              value: "0"
+              value: "1"

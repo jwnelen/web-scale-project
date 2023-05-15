@@ -28,6 +28,7 @@ spec:
       containers:
         - name: order
           image: order:latest
+          imagePullPolicy: IfNotPresent
           resources:
             limits:
               memory: "1Gi"
@@ -40,10 +41,6 @@ spec:
           ports:
             - containerPort: 5000
           env:
-            - name: USER_SERVICE_URL
-              value: "user-service"
-            - name: STOCK_SERVICE_URL
-              value: "stock-service"
             - name: REDIS_HOST
               value: redis-master
             - name: REDIS_PORT

@@ -1,6 +1,5 @@
 import os
 import atexit
-from dotenv import load_dotenv
 from flask import Flask, jsonify, make_response
 import redis
 
