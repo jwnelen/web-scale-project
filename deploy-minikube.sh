@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+minikube start
+
+minikube dashboard &
+
+kubectl config use-context minikube
+
 eval $(minikube docker-env)
 
 docker-compose build
