@@ -6,6 +6,9 @@ minikube dashboard &
 
 kubectl config use-context minikube
 
+# Fixes a bug on ubuntu
+kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
+
 eval $(minikube docker-env)
 
 docker-compose build
