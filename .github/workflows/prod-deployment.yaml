@@ -10,11 +10,10 @@ env:
   GKE_CLUSTER: autopilot-cluster-1    # Add your cluster name here.
   GKE_ZONE: us-central1   # Add your cluster zone here.
   DEPLOYMENT_NAME: gke-test # Add your deployment name here.
-  IMAGE: static-site
 
 jobs:
-  setup-build-publish-deploy:
-    name: Setup, Build, Publish, and Deploy
+  setup:
+    name: Setup Google Cloud
     runs-on: ubuntu-latest
     environment: production
 
@@ -46,6 +45,12 @@ jobs:
     - id: 'get-pods'
       run: 'kubectl get pods'
 
+  build:
+    name: Build images
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
     - id: 'docker-compose-build'
       run: 'docker-compose build'
 
@@ -55,23 +60,24 @@ jobs:
         docker tag stock gcr.io/$PROJECT_ID/stock:$GITHUB_SHA
         docker tag user gcr.io/$PROJECT_ID/user:$GITHUB_SHA
 
+  publish:
+    name: Publish images
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+
     # Push the Docker image to Google Container Registry
     - name: Publish
       run: |-
         docker push "gcr.io/$PROJECT_ID/order:$GITHUB_SHA"
         docker push "gcr.io/$PROJECT_ID/stock:$GITHUB_SHA"
         docker push "gcr.io/$PROJECT_ID/user:$GITHUB_SHA"   
-
-    # Install helm
-    - name: Install Helm
-      run: |-
-        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-        helm repo add bitnami https://charts.bitnami.com/bitnami
-        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-        helm repo update
-        helm install -f helm-config/redis-helm-values.yaml redis bitnami/redis
-        helm install -f helm-config/nginx-helm-values.yaml nginx ingress-nginx/ingress-nginx
-
+  
+  deploy:      
+    name: Deploy to GKE
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |-
