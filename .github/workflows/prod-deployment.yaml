@@ -61,27 +61,23 @@ jobs:
         docker tag stock gcr.io/$PROJECT_ID/stock:$GITHUB_SHA
         docker tag user gcr.io/$PROJECT_ID/user:$GITHUB_SHA
 
-  publish:
-    name: Publish images
-    needs: build
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-
     # Push the Docker image to Google Container Registry
     - name: Publish
       run: |-
         docker push "gcr.io/$PROJECT_ID/order:$GITHUB_SHA"
         docker push "gcr.io/$PROJECT_ID/stock:$GITHUB_SHA"
-        docker push "gcr.io/$PROJECT_ID/user:$GITHUB_SHA"   
-  
+        docker push "gcr.io/$PROJECT_ID/user:$GITHUB_SHA"  
+
   deploy:      
     name: Deploy to GKE
-    needs: publish
+    needs: build
     runs-on: ubuntu-latest
     environment: production
     steps:
     # Deploy the Docker image to the GKE cluster
+    - name: Checkout
+      uses: actions/checkout@v3
+
     - name: Deploy
       run: |-
         cd k8s-gcloud
