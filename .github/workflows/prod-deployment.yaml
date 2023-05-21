@@ -12,7 +12,7 @@ env:
   DEPLOYMENT_NAME: gke-test # Add your deployment name here.
 
 jobs:
-  setup:
+  setup-build-publish-deploy:
     name: Setup Google Cloud
     runs-on: ubuntu-latest
     environment: production
@@ -42,16 +42,6 @@ jobs:
     - id: 'get-pods'
       run: 'kubectl get pods'
 
-  build:
-    name: Build images
-    needs: setup
-    runs-on: ubuntu-latest
-    environment: production
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
     - id: 'docker-compose-build'
       run: 'docker-compose build'
 
@@ -67,16 +57,6 @@ jobs:
         docker push "gcr.io/$PROJECT_ID/order:$GITHUB_SHA"
         docker push "gcr.io/$PROJECT_ID/stock:$GITHUB_SHA"
         docker push "gcr.io/$PROJECT_ID/user:$GITHUB_SHA"  
-
-  deploy:      
-    name: Deploy to GKE
-    needs: build
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-    # Deploy the Docker image to the GKE cluster
-    - name: Checkout
-      uses: actions/checkout@v3
 
     - name: Deploy
       run: |-
