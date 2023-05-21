@@ -22,6 +22,11 @@ jobs:
       contents: read
 
     steps:
+
+    # Checkout the repo
+    - name: Checkout
+      uses: actions/checkout@v3
+
     # Setup gcloud CLI
     - uses: 'google-github-actions/auth@v1'
       with:
