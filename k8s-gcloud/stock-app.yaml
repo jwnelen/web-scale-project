@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: stock
-          image: stock:latest
+          image: gcr.io/wdmproject23/stock
           imagePullPolicy: IfNotPresent
           resources:
             limits:

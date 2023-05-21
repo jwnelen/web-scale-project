@@ -1,14 +1,10 @@
 import os
 import atexit
-from dotenv import load_dotenv
-from flask import Flask, jsonify, make_response, url_for
+
+from flask import Flask, jsonify, make_response
 import redis
-import sys
 import requests
-import socket
 
-
-gateway_url = os.environ['GATEWAY_URL']
 
 app = Flask("order-service")
 
@@ -88,24 +84,22 @@ def checkout(order_id):
     for item in items.split(","):
         if item == '':
             continue
-        result = requests.get(f"{gateway_url}/stock/find/{item}").json()
+        result = requests.get(f"http://stock-service:5000/find/{item}").json()
 
         if result != None:
             total_cost += int(result['price'])
 
-    payment = requests.post(f"{gateway_url}/payment/pay/{order[b'user_id'].decode('utf-8')}/{order_id}/{total_cost}", json={"total_cost": total_cost, "order_id": order_id})
+    payment = requests.post(f"http://user-service:5000/pay/{order[b'user_id'].decode('utf-8')}/{order_id}/{total_cost}", json={"total_cost": total_cost, "order_id": order_id})
 
     if payment.status_code != 200:
         response.status_code = payment.status_code
         return response
-    
     for item in items.split(","):
         if item == '':
             continue
-        subtract = requests.post(f"{gateway_url}/stock/subtract/{item}/1")
+        subtract = requests.post(f"http://stock-service:5000/subtract/{item}/1")
         if subtract.status_code != 200:
             response.status_code = subtract.status_code
             return response
-        
     response.status_code = 200
     return response
