@@ -26,21 +26,23 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    # Configure the Google Cloud CLI with the service account key so that we can
-    # deploy to GKE.
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v1'
+    # Setup gcloud CLI
+    - uses: google-github-actions/setup-gcloud@1bee7de035d65ec5da40a31f8589e240eba8fde5
       with:
-        workload_identity_provider: 'projects/815900700123/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-        service_account: 'gh-deployment@wdmproject23.iam.gserviceaccount.com'
-        # workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-        # service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+        service_account_key: ${{ secrets.GKE_SA_KEY }}
+        project_id: ${{ secrets.GKE_PROJECT }}
 
-    - id: 'get-credentials'
-      uses: 'google-github-actions/get-gke-credentials@v1'
+    # Configure Docker to use the gcloud command-line tool as a credential
+    # helper for authentication
+    - run: |-
+        gcloud --quiet auth configure-docker
+
+    # Get the GKE credentials so we can deploy to the cluster
+    - uses: google-github-actions/get-gke-credentials@db150f2cc60d1716e61922b832eae71d2a45938f
       with:
-        cluster_name: '${{ env.GKE_CLUSTER }}'
-        location: '${{ env.GKE_ZONE }}'
+        cluster_name: ${{ env.GKE_CLUSTER }}
+        location: ${{ env.GKE_ZONE }}
+        credentials: ${{ secrets.GKE_SA_KEY }}
 
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
     - id: 'get-pods'
