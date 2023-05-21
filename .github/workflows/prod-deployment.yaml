@@ -62,27 +62,22 @@ jobs:
         docker push "gcr.io/$PROJECT_ID/stock:$GITHUB_SHA"
         docker push "gcr.io/$PROJECT_ID/user:$GITHUB_SHA"   
 
-    - name: 'Deploy'
-      uses: 'deliverybot/helm@v1'
-      with:
-        release: 'nginx'
-        namespace: 'default'
-        chart: 'app'
-        token: '${{ github.token }}'
-        values: |
-          name: foobar
-        value-files: >-
-          [
-            "helm-config/nginx-helm-values.yaml", 
-            "helm-config/redis-helm-values.yaml"
-          ]
-      env:
-        KUBECONFIG_FILE: '${{ secrets.KUBECONFIG }}'
+    # Install helm
+    - name: Install Helm
+      run: |-
+        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+        helm repo update
+        helm install -f helm-config/redis-helm-values.yaml redis bitnami/redis
+        helm install -f helm-config/nginx-helm-values.yaml nginx ingress-nginx/ingress-nginx
 
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |-
         cd k8s-gcloud
         kubectl apply -f .
-        kubectl rollout status deployment/$DEPLOYMENT_NAME
-        kubectl get services -o wide
+
+
+# kubectl rollout status deployment/$DEPLOYMENT_NAME
+# kubectl get services -o wide
