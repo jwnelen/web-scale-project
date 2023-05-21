@@ -62,6 +62,23 @@ jobs:
         docker push "gcr.io/$PROJECT_ID/stock:$GITHUB_SHA"
         docker push "gcr.io/$PROJECT_ID/user:$GITHUB_SHA"   
 
+    - name: 'Deploy'
+      uses: 'deliverybot/helm@v1'
+      with:
+        release: 'nginx'
+        namespace: 'default'
+        chart: 'app'
+        token: '${{ github.token }}'
+        values: |
+          name: foobar
+        value-files: >-
+          [
+            "helm-config/nginx-helm-values.yaml", 
+            "helm-config/redis-helm-values.yaml"
+          ]
+      env:
+        KUBECONFIG_FILE: '${{ secrets.KUBECONFIG }}'
+
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |-
