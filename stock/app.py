@@ -27,9 +27,8 @@ def hello():
 @app.post('/item/create/<price>')
 def create_item(price: int):
     item_id = db.incr('item_id')
-    db.hset(f'item_id:{item_id}', 'price', price)
+    db.hset(f'item_id:{item_id}', 'price', round(float(price)))
     db.hset(f'item_id:{item_id}', 'stock', 0)
-    print("CREATED ITEM:", item_id, price, file=sys.stderr)
     return jsonify({'item_id': item_id})
 
 @app.get('/find/<item_id>')
