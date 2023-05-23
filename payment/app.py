@@ -41,6 +41,7 @@ def find_user(user_id: str):
 
 @app.post('/add_funds/<user_id>/<amount>')
 def add_credit(user_id: str, amount: int):
+    amount = round(float(amount))
     db.hincrby(f"user_id:{user_id}", "credit", amount)
     return jsonify({"done": True})
 
