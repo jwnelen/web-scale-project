@@ -69,7 +69,7 @@ def remove_stock(item_id: str, amount: int):
             return response
         
         pipe.hincrby(f'item_id:{item_id}', 'stock', -int(amount))
+        pipe.hget(f'item_id:{item_id}', 'stock')
         result = pipe.execute()
-
-    response.status_code = 200
-    return response
+        stock = result[1].decode('utf-8')
+    return jsonify({'stock': stock})
