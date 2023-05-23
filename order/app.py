@@ -22,11 +22,15 @@ atexit.register(close_db_connection)
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
-    order_id = db.incr('order_count')
-    db.hset(f'order_id:{order_id}', 'user_id', user_id)
-    db.hset(f'order_id:{order_id}', 'paid', 0)
-    db.hset(f'order_id:{order_id}', 'items', "")
-    db.hset(f'order_id:{order_id}', 'total_cost', 0)
+    with db.pipeline() as pipe:
+        pipe.incr('order_count')
+        pipe.get('order_count')
+        order_id = pipe.execute()[1].decode("utf-8")
+        pipe.hset(f'order_id:{order_id}', 'user_id', user_id)
+        pipe.hset(f'order_id:{order_id}', 'paid', 0)
+        pipe.hset(f'order_id:{order_id}', 'items', "")
+        pipe.hset(f'order_id:{order_id}', 'total_cost', 0)
+        result = pipe.execute()
 
     response = jsonify({"order_id": order_id})
     response.status_code = 200
