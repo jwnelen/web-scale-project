@@ -40,7 +40,7 @@ def find_item(item_id: str):
     item = db.hgetall(f'item_id:{item_id}')
     items = {}
     for k, v in item.items():
-        items[k.decode('utf-8')] = int(v.decode('utf-8'))
+        items[k.decode('utf-8')] = round(float(v.decode('utf-8')))
     return jsonify(items)
 
 @app.post('/add/<item_id>/<amount>')
