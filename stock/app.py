@@ -26,9 +26,13 @@ def hello():
 
 @app.post('/item/create/<price>')
 def create_item(price: int):
-    item_id = db.incr('item_id')
-    db.hset(f'item_id:{item_id}', 'price', round(float(price)))
-    db.hset(f'item_id:{item_id}', 'stock', 0)
+    with db.pipeline() as pipe:
+        pipe.incr('item_id')
+        pipe.get('item_id')
+        item_id = pipe.execute()[1].decode('utf-8')
+        pipe.hset(f'item_id:{item_id}', 'price', round(float(price)))
+        pipe.hset(f'item_id:{item_id}', 'stock', 0)
+        result = pipe.execute()
     return jsonify({'item_id': item_id})
 
 @app.get('/find/<item_id>')
@@ -50,17 +54,22 @@ def add_stock(item_id: str, amount: int):
 @app.post('/subtract/<item_id>/<amount>')
 def remove_stock(item_id: str, amount: int):
     response = make_response("")
-    exists = db.hget(f'item_id:{item_id}', 'stock')
-    
-    if exists == None:
-        response.status_code = 400
-        return response
-    
-    stock = db.hget(f'item_id:{item_id}', 'stock').decode("utf-8")
-    if int(stock) < int(amount):
-        response.status_code = 400
-        return response
-    
-    db.hincrby(f'item_id:{item_id}', 'stock', -int(amount))
+    with db.pipeline() as pipe:
+        pipe.hget(f'item_id:{item_id}', 'stock')
+        exists = pipe.execute()[0].decode('utf-8')
+
+        if exists == None:
+            response.status_code = 400
+            return response
+        
+        pipe.hget(f'item_id:{item_id}', 'stock')
+        stock = pipe.execute()[0].decode('utf-8')
+        if int(stock) < int(amount):
+            response.status_code = 400
+            return response
+        
+        pipe.hincrby(f'item_id:{item_id}', 'stock', -int(amount))
+        result = pipe.execute()
+
     response.status_code = 200
     return response

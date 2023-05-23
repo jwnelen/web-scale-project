@@ -27,9 +27,13 @@ def hello():
 
 @app.post('/create_user')
 def create_user():
-    user_id = db.incr('user_count')
-    user = {"user_id": user_id}
-    db.hset(f"user_id:{user_id}", "credit", 0)
+    with db.pipeline() as pipe:
+        pipe.incr('user_count')
+        pipe.get('user_count')
+        user_id = pipe.execute()[1].decode('utf-8')
+        user = {"user_id": user_id}
+        pipe.hset(f"user_id:{user_id}", "credit", 0)
+        result = pipe.execute()
     return jsonify(user)
 
 
@@ -50,24 +54,33 @@ def add_credit(user_id: str, amount: int):
 def remove_credit(user_id: str, order_id: str, amount: int):
     #TODO what is order_id used for???
     response = make_response("")
-    amount = int(amount)
-    credit = int(db.hget(f'user_id:{user_id}', 'credit').decode('utf-8'))
-    if credit < amount:
-        response.status_code = 400
-        return response
-    credit -= amount
-    db.hset(f'user_id:{user_id}', 'credit', credit)
+    with db.pipeline() as pipe:
+        amount = int(amount)
+        pipe.hget(f'user_id:{user_id}', 'credit')
+        credit = pipe.execute()[0].decode('utf-8')
+        if credit < amount:
+            response.status_code = 400
+            return response
+        credit -= amount
+        pipe.hset(f'user_id:{user_id}', 'credit', credit)
+        result = pipe.execute()
+
     response.status_code = 200
     return response
 
 @app.post('/cancel/<user_id>/<order_id>')
 def cancel_payment(user_id: str, order_id: str):
     response = make_response("")
-    status = db.hget(f'order_id:{order_id}', 'paid').decode('utf-8')
-    if status == 1:
-        db.hset(f'order_id:{order_id}', 'paid', 0)
-        response.status_code = 200
-        return response
+    with db.pipeline() as pipe:
+        pipe.hget(f'order_id:{order_id}', 'paid')
+        status = pipe.execute()[0].decode('utf-8')
+        if status == 1:
+            pipe.hset(f'order_id:{order_id}', 'paid', 0)
+            result = pipe.execute()
+            response.status_code = 200
+            return response
+        else:
+            response.status_code = 400
     
     # return failure if we try to cancel payment for order which is not yet paid ?
     return response
