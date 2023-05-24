@@ -5,6 +5,7 @@ import redis
 import uuid
 
 
+gateway_url = os.environ['GATEWAY_URL']
 
 app = Flask("payment-service")
 
@@ -53,7 +54,6 @@ def add_credit(user_id: str, amount: int):
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def remove_credit(user_id: str, order_id: str, amount: int):
-    #TODO what is order_id used for???
     response = make_response("")
     with db.pipeline() as pipe:
         amount = int(amount)

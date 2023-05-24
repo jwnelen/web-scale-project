@@ -1,17 +1,23 @@
 import os
 import atexit
 import uuid
-
-from flask import Flask, make_response
 import redis
 import requests
 
+from flask import Flask, make_response
+from common.docker_connector import DockerConnector
+from common.k8s_connector import K8sConnector
+
 app = Flask("order-service")
+
+gateway_url = os.environ['GATEWAY_URL']
 
 db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               port=int(os.environ['REDIS_PORT']),
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
+
+connector = K8sConnector()
 
 
 def close_db_connection():
@@ -27,7 +33,7 @@ def status_code_is_success(status_code: int) -> bool:
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
-    user_data = requests.post(f"http://user-service:5000/find_user/{user_id}")
+    user_data = connector.find_user(user_id)
 
     if not status_code_is_success(user_data.status_code):
         data = {}

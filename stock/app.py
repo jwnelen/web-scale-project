@@ -2,7 +2,8 @@ import os
 import atexit
 from flask import Flask, jsonify, make_response
 import redis
-import sys
+
+gateway_url = os.environ['GATEWAY_URL']
 
 app = Flask("stock-service")
 
