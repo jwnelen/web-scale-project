@@ -34,29 +34,40 @@ def create_user():
         pipe.execute()
 
     data = {"user_id": user_id}
-
     return data, 200
 
 
 @app.get('/find_user/<user_id>')
 def find_user(user_id: str):
-    user_credit = int(db.hget(f"user_id:{user_id}", "credit").decode("utf-8"))
-    return jsonify({"user_id": user_id, "credit": user_credit})
+    user_credit = db.hget(f"user_id:{user_id}", "credit")
+    if not user_credit:
+        return {}, 400
+    user_credit = int(user_credit.decode('utf-8'))
+    return {"user_id": user_id, "credit": user_credit}, 200
 
 
 @app.post('/add_funds/<user_id>/<amount>')
 def add_credit(user_id: str, amount: int):
     amount = round(float(amount))
-    db.hincrby(f"user_id:{user_id}", "credit", amount)
-    return jsonify({"done": True})
+    data = {'done': False}
+    with db.pipeline() as pipe:
+        pipe.exists(f'user_id:{user_id}')
+        exists = pipe.execute()[0]
+        if exists:
+            pipe.hincrby(f"user_id:{user_id}", "credit", amount)
+            pipe.execute()
+            data['done'] = True
+            return data, 200
+        else:
+            return data, 400  
 
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def remove_credit(user_id: str, order_id: str, amount: int):
     #TODO what is order_id used for???
     response = make_response("")
+    amount = int(amount)
     with db.pipeline() as pipe:
-        amount = int(amount)
         pipe.hget(f'user_id:{user_id}', 'credit')
         credit = int(pipe.execute()[0].decode('utf-8'))
         if credit < amount:
