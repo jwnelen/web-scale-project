@@ -3,8 +3,6 @@ import atexit
 from flask import Flask, jsonify, make_response
 import redis
 
-gateway_url = os.environ['GATEWAY_URL']
-
 app = Flask("stock-service")
 
 db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],

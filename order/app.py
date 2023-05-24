@@ -2,10 +2,10 @@ import os
 import atexit
 import uuid
 import redis
-import requests
 
 from flask import Flask, make_response
-from common.docker_connector import DockerConnector
+
+from docker_connector import DockerConnector
 
 app = Flask("order-service")
 
