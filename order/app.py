@@ -90,10 +90,10 @@ def find_order(order_id):
         return result, 400
 
     result['order_id'] = order_id
-    result['user_id'] = query_result['user_id'].decode("utf-8")
-    result['paid'] = query_result['paid'].decode("utf-8")
-    result['items'] = query_result['items'].decode("utf-8")
-    result['total_cost'] = query_result['total_cost'].decode("utf-8")
+    result['user_id'] = query_result[b'user_id'].decode("utf-8")
+    result['paid'] = query_result[b'paid'].decode("utf-8")
+    result['items'] = query_result[b'items'].decode("utf-8")
+    result['total_cost'] = query_result[b'total_cost'].decode("utf-8")
 
     return result, 200
 
