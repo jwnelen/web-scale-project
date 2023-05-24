@@ -2,7 +2,6 @@ import os
 import atexit
 from flask import Flask, jsonify, make_response
 import redis
-import sys
 import uuid
 
 app = Flask("stock-service")

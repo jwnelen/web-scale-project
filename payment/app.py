@@ -5,7 +5,6 @@ import redis
 import uuid
 
 
-
 app = Flask("payment-service")
 
 db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
@@ -64,7 +63,6 @@ def add_credit(user_id: str, amount: int):
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def remove_credit(user_id: str, order_id: str, amount: int):
-    #TODO what is order_id used for???
     response = make_response("")
     amount = int(amount)
     with db.pipeline() as pipe:

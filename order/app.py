@@ -1,17 +1,22 @@
 import os
 import atexit
 import uuid
+import redis
 
 from flask import Flask, make_response
-import redis
-import requests
+
+from docker_connector import DockerConnector
 
 app = Flask("order-service")
+
+gateway_url = os.environ['GATEWAY_URL']
 
 db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               port=int(os.environ['REDIS_PORT']),
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
+
+connector = DockerConnector(gateway_url)
 
 
 def close_db_connection():
@@ -27,7 +32,7 @@ def status_code_is_success(status_code: int) -> bool:
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
-    user_data = requests.post(f"http://user-service:5000/find_user/{user_id}")
+    user_data = connector.payment_find_user(user_id)
 
     if not status_code_is_success(user_data.status_code):
         data = {}
@@ -109,13 +114,12 @@ def checkout(order_id):
     for item in items.split(","):
         if item == '':
             continue
-        result = requests.get(f"http://stock-service:5000/find/{item}").json()
+        result = connector.stock_find(item)
 
         if result != None:
             total_cost += int(result['price'])
 
-    payment = requests.post(f"http://user-service:5000/pay/{order[b'user_id'].decode('utf-8')}/{order_id}/{total_cost}",
-                            json={"total_cost": total_cost, "order_id": order_id})
+    payment = connector.payment_pay(order[b'user_id'].decode('utf-8'), order_id, total_cost)
 
     if payment.status_code != 200:
         response.status_code = payment.status_code
@@ -123,7 +127,7 @@ def checkout(order_id):
     for item in items.split(","):
         if item == '':
             continue
-        subtract = requests.post(f"http://stock-service:5000/subtract/{item}/1")
+        subtract = connector.stock_subtract(item, 1)
         if subtract.status_code != 200:
             response.status_code = subtract.status_code
             return response
