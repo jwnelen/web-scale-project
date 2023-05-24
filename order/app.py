@@ -20,9 +20,20 @@ def close_db_connection():
 atexit.register(close_db_connection)
 
 
+def status_code_is_success(status_code: int) -> bool:
+    return 200 <= status_code < 300
+
+
 @app.post('/create/<user_id>')
 def create_order(user_id):
+
+    user_data = requests.post(f"http://user-service:5000/find_user/{user_id}")
+
+    if not status_code_is_success(user_data):
+        return make_response("", 400)
+
     with db.pipeline() as pipe:
+        # TODO: lock might be necessary
         pipe.incr('order_count')
         pipe.get('order_count')
         order_id = pipe.execute()[1].decode("utf-8")
@@ -30,11 +41,11 @@ def create_order(user_id):
         pipe.hset(f'order_id:{order_id}', 'paid', 0)
         pipe.hset(f'order_id:{order_id}', 'items', "")
         pipe.hset(f'order_id:{order_id}', 'total_cost', 0)
-        result = pipe.execute()
+        pipe.execute()
 
-    response = jsonify({"order_id": order_id})
-    response.status_code = 200
-    return response
+    data = {"order_id": order_id}
+
+    return data, 200
 
 
 @app.delete('/remove/<order_id>')
