@@ -27,7 +27,6 @@ def status_code_is_success(status_code: int) -> bool:
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
-
     user_data = requests.post(f"http://user-service:5000/find_user/{user_id}")
 
     if not status_code_is_success(user_data.status_code):
@@ -49,10 +48,14 @@ def create_order(user_id):
 
 @app.delete('/remove/<order_id>')
 def remove_order(order_id):
-    response = make_response("")
-    db.hdel(f"order_id:{order_id}", "user_id")
-    response.status_code = 200
-    return response
+    result = db.hdel(f"order_id:{order_id}", "user_id")
+
+    data = {}
+
+    if not result:
+        return data, 400
+
+    return data, 200
 
 
 @app.post('/addItem/<order_id>/<item_id>')
