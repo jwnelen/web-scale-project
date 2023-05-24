@@ -51,9 +51,10 @@ def find_item(item_id: str):
 def add_stock(item_id: str, amount: int):
     with db.pipeline() as pipe:
         pipe.exists(f'item_id:{item_id}')
-        exists = int(pipe.execute()[0])
+        exists = pipe.execute()[0]
         if exists:     
             pipe.hincrby(f'item_id:{item_id}', 'stock', int(amount))
+            pipe.execute()
             return {}, 200
         else:
             return {}, 400
@@ -65,7 +66,7 @@ def remove_stock(item_id: str, amount: int):
     data = {}
     with db.pipeline() as pipe:
         pipe.exists(f'item_id:{item_id}')
-        exists = int(pipe.execute()[0])
+        exists = pipe.execute()[0]
 
         if not exists:
             return data, 400
