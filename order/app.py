@@ -31,7 +31,8 @@ def create_order(user_id):
     user_data = requests.post(f"http://user-service:5000/find_user/{user_id}")
 
     if not status_code_is_success(user_data.status_code):
-        return make_response("", 400)
+        data = {}
+        return data, 400
 
     with db.pipeline() as pipe:
         order_id = str(uuid.uuid4())
