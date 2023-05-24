@@ -6,7 +6,7 @@ import requests
 
 from flask import Flask, make_response
 from common.docker_connector import DockerConnector
-from common.k8s_connector import K8sConnector
+#from common.k8s_connector import K8sConnector
 
 app = Flask("order-service")
 
@@ -17,7 +17,7 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
 
-connector = K8sConnector()
+connector = DockerConnector()
 
 
 def close_db_connection():
@@ -33,7 +33,7 @@ def status_code_is_success(status_code: int) -> bool:
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
-    user_data = connector.find_user(user_id)
+    user_data = connector.payment_find_user(user_id)
 
     if not status_code_is_success(user_data.status_code):
         data = {}
@@ -115,13 +115,12 @@ def checkout(order_id):
     for item in items.split(","):
         if item == '':
             continue
-        result = requests.get(f"http://stock-service:5000/find/{item}").json()
+        result = connector.stock_find(item)
 
         if result != None:
             total_cost += int(result['price'])
 
-    payment = requests.post(f"http://user-service:5000/pay/{order[b'user_id'].decode('utf-8')}/{order_id}/{total_cost}",
-                            json={"total_cost": total_cost, "order_id": order_id})
+    payment = connector.payment_pay(order[b'user_id'].decode('utf-8'), order_id, total_cost)
 
     if payment.status_code != 200:
         response.status_code = payment.status_code
@@ -129,7 +128,7 @@ def checkout(order_id):
     for item in items.split(","):
         if item == '':
             continue
-        subtract = requests.post(f"http://stock-service:5000/subtract/{item}/1")
+        subtract = connector.stock_subtract(item, 1)
         if subtract.status_code != 200:
             response.status_code = subtract.status_code
             return response
