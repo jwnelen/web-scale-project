@@ -2,6 +2,7 @@ import os
 import atexit
 from flask import Flask, jsonify, make_response
 import redis
+import uuid
 
 
 
@@ -28,13 +29,13 @@ def hello():
 @app.post('/create_user')
 def create_user():
     with db.pipeline() as pipe:
-        pipe.incr('user_count')
-        pipe.get('user_count')
-        user_id = pipe.execute()[1].decode('utf-8')
-        user = {"user_id": user_id}
+        user_id = str(uuid.uuid4())
         pipe.hset(f"user_id:{user_id}", "credit", 0)
-        result = pipe.execute()
-    return jsonify(user)
+        pipe.execute()
+
+    data = {"user_id": user_id}
+
+    return data, 200
 
 
 @app.get('/find_user/<user_id>')

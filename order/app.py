@@ -1,5 +1,6 @@
 import os
 import atexit
+import uuid
 
 from flask import Flask, jsonify, make_response
 import redis
@@ -29,14 +30,11 @@ def create_order(user_id):
 
     user_data = requests.post(f"http://user-service:5000/find_user/{user_id}")
 
-    if not status_code_is_success(user_data):
+    if not status_code_is_success(user_data.status_code):
         return make_response("", 400)
 
     with db.pipeline() as pipe:
-        # TODO: lock might be necessary
-        pipe.incr('order_count')
-        pipe.get('order_count')
-        order_id = pipe.execute()[1].decode("utf-8")
+        order_id = str(uuid.uuid4())
         pipe.hset(f'order_id:{order_id}', 'user_id', user_id)
         pipe.hset(f'order_id:{order_id}', 'paid', 0)
         pipe.hset(f'order_id:{order_id}', 'items', "")
