@@ -32,10 +32,20 @@ jobs:
       with:
         credentials_json: '${{ secrets.GKE_SA_KEY }}'
 
-    # Configure Docker to use the gcloud command-line tool as a credential
+    # Create the cluster
+    - id: create-cluster
+      run: |-
+        gcloud config set project $PROJECT_ID
+        gcloud container clusters create-auto $GKE_CLUSTER --region=$GKE_ZONE
+        gcloud container clusters get-credentials $GKE_CLUSTER --region=$GKE_ZONE
+        kubectl config use-context gke_wdmproject23_europe-west4_app-cluster
+        # Configure Docker to use the gcloud command-line tool as a credential
+        
     # helper for authentication
-    - run: |-
+    - id: configure-docker
+      run: |-
         gcloud --quiet auth configure-docker
+
 
     # Get the GKE credentials so we can deploy to the cluster
     - uses: google-github-actions/get-gke-credentials@db150f2cc60d1716e61922b832eae71d2a45938f
