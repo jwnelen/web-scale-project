@@ -2,10 +2,9 @@ import os
 import atexit
 import uuid
 
-from flask import Flask, jsonify, make_response
+from flask import Flask, make_response
 import redis
 import requests
-
 
 app = Flask("order-service")
 
@@ -13,6 +12,7 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               port=int(os.environ['REDIS_PORT']),
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
+
 
 def close_db_connection():
     db.close()
@@ -62,7 +62,7 @@ def remove_order(order_id):
 def add_item(order_id, item_id):
     response = make_response("")
     order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
-    order_items += str(item_id)+","
+    order_items += str(item_id) + ","
     db.hset(f'order_id:{order_id}', 'items', order_items)
 
     response.status_code = 200
@@ -73,22 +73,30 @@ def add_item(order_id, item_id):
 def remove_item(order_id, item_id):
     response = make_response("")
     order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
-    order_items = str.replace(order_items, str(item_id)+",", "")
+    order_items = str.replace(order_items, str(item_id) + ",", "")
     db.hset(f'order_id:{order_id}', 'items', order_items)
 
     response.status_code = 200
     return response
 
+
 @app.get('/find/<order_id>')
 def find_order(order_id):
     query_result = db.hgetall(f'order_id:{order_id}')
+
     result = {}
+
+    if not query_result:
+        return result, 400
+
     result['order_id'] = order_id
     result['user_id'] = query_result['user_id'].decode("utf-8")
     result['paid'] = query_result['paid'].decode("utf-8")
     result['items'] = query_result['items'].decode("utf-8")
     result['total_cost'] = query_result['total_cost'].decode("utf-8")
-    return result
+
+    return result, 200
+
 
 @app.post('/checkout/<order_id>')
 def checkout(order_id):
@@ -106,7 +114,8 @@ def checkout(order_id):
         if result != None:
             total_cost += int(result['price'])
 
-    payment = requests.post(f"http://user-service:5000/pay/{order[b'user_id'].decode('utf-8')}/{order_id}/{total_cost}", json={"total_cost": total_cost, "order_id": order_id})
+    payment = requests.post(f"http://user-service:5000/pay/{order[b'user_id'].decode('utf-8')}/{order_id}/{total_cost}",
+                            json={"total_cost": total_cost, "order_id": order_id})
 
     if payment.status_code != 200:
         response.status_code = payment.status_code
