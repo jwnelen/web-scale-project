@@ -57,7 +57,7 @@ def remove_credit(user_id: str, order_id: str, amount: int):
     with db.pipeline() as pipe:
         amount = int(amount)
         pipe.hget(f'user_id:{user_id}', 'credit')
-        credit = pipe.execute()[0].decode('utf-8')
+        credit = int(pipe.execute()[0].decode('utf-8'))
         if credit < amount:
             response.status_code = 400
             return response
