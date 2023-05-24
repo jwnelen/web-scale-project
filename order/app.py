@@ -6,7 +6,6 @@ import requests
 
 from flask import Flask, make_response
 from common.docker_connector import DockerConnector
-#from common.k8s_connector import K8sConnector
 
 app = Flask("order-service")
 
@@ -17,7 +16,7 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
 
-connector = DockerConnector()
+connector = DockerConnector(gateway_url)
 
 
 def close_db_connection():
