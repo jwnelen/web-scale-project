@@ -2,7 +2,7 @@ import os
 import atexit
 from flask import Flask, jsonify, make_response
 import redis
-
+import uuid
 
 
 app = Flask("payment-service")
@@ -28,34 +28,44 @@ def hello():
 @app.post('/create_user')
 def create_user():
     with db.pipeline() as pipe:
-        pipe.incr('user_count')
-        pipe.get('user_count')
-        user_id = pipe.execute()[1].decode('utf-8')
-        user = {"user_id": user_id}
+        user_id = str(uuid.uuid4())
         pipe.hset(f"user_id:{user_id}", "credit", 0)
-        result = pipe.execute()
-    return jsonify(user)
+        pipe.execute()
+
+    data = {"user_id": user_id}
+    return data, 200
 
 
 @app.get('/find_user/<user_id>')
 def find_user(user_id: str):
-    user_credit = int(db.hget(f"user_id:{user_id}", "credit").decode("utf-8"))
-    return jsonify({"user_id": user_id, "credit": user_credit})
+    user_credit = db.hget(f"user_id:{user_id}", "credit")
+    if not user_credit:
+        return {}, 400
+    user_credit = int(user_credit.decode('utf-8'))
+    return {"user_id": user_id, "credit": user_credit}, 200
 
 
 @app.post('/add_funds/<user_id>/<amount>')
 def add_credit(user_id: str, amount: int):
     amount = round(float(amount))
-    db.hincrby(f"user_id:{user_id}", "credit", amount)
-    return jsonify({"done": True})
+    data = {'done': False}
+    with db.pipeline() as pipe:
+        pipe.exists(f'user_id:{user_id}')
+        exists = pipe.execute()[0]
+        if exists:
+            pipe.hincrby(f"user_id:{user_id}", "credit", amount)
+            pipe.execute()
+            data['done'] = True
+            return data, 200
+        else:
+            return data, 400  
 
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def remove_credit(user_id: str, order_id: str, amount: int):
-    #TODO what is order_id used for???
     response = make_response("")
+    amount = int(amount)
     with db.pipeline() as pipe:
-        amount = int(amount)
         pipe.hget(f'user_id:{user_id}', 'credit')
         credit = int(pipe.execute()[0].decode('utf-8'))
         if credit < amount:

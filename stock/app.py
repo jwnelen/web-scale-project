@@ -2,7 +2,7 @@ import os
 import atexit
 from flask import Flask, jsonify, make_response
 import redis
-import sys
+import uuid
 
 app = Flask("stock-service")
 
@@ -27,49 +27,57 @@ def hello():
 @app.post('/item/create/<price>')
 def create_item(price: int):
     with db.pipeline() as pipe:
-        pipe.incr('item_id')
-        pipe.get('item_id')
-        item_id = pipe.execute()[1].decode('utf-8')
+        item_id = uuid.uuid4()
         pipe.hset(f'item_id:{item_id}', 'price', round(float(price)))
         pipe.hset(f'item_id:{item_id}', 'stock', 0)
-        result = pipe.execute()
-    return jsonify({'item_id': item_id})
+        pipe.execute()
+    data = {'item_id': item_id}
+    return data, 200
+
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
     item = db.hgetall(f'item_id:{item_id}')
+    if item is None:
+        return {}, 400
     items = {}
     for k, v in item.items():
         items[k.decode('utf-8')] = round(float(v.decode('utf-8')))
-    return jsonify(items)
+    return items, 200
+
 
 @app.post('/add/<item_id>/<amount>')
 def add_stock(item_id: str, amount: int):
-    response = make_response("")
-    db.hincrby(f'item_id:{item_id}', 'stock', int(amount))
-    response.status_code = 200
-    return response
+    with db.pipeline() as pipe:
+        pipe.exists(f'item_id:{item_id}')
+        exists = pipe.execute()[0]
+        if exists:     
+            pipe.hincrby(f'item_id:{item_id}', 'stock', int(amount))
+            pipe.execute()
+            return {}, 200
+        else:
+            return {}, 400
 
 
 @app.post('/subtract/<item_id>/<amount>')
 def remove_stock(item_id: str, amount: int):
     response = make_response("")
+    data = {}
     with db.pipeline() as pipe:
-        pipe.hget(f'item_id:{item_id}', 'stock')
-        exists = pipe.execute()[0].decode('utf-8')
+        pipe.exists(f'item_id:{item_id}')
+        exists = pipe.execute()[0]
 
-        if exists == None:
-            response.status_code = 400
-            return response
-        
+        if not exists:
+            return data, 400
         pipe.hget(f'item_id:{item_id}', 'stock')
-        stock = pipe.execute()[0].decode('utf-8')
-        if int(stock) < int(amount):
+        stock = int(pipe.execute()[0].decode('utf-8'))
+
+        if stock < int(amount):
             response.status_code = 400
             return response
         
         pipe.hincrby(f'item_id:{item_id}', 'stock', -int(amount))
-        pipe.hget(f'item_id:{item_id}', 'stock')
-        result = pipe.execute()
-        stock = result[1].decode('utf-8')
-    return jsonify({'stock': stock})
+        stock -= int(amount)
+        pipe.execute()
+    data = {'stock': stock}
+    return data, 200
