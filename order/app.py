@@ -1,7 +1,10 @@
+import json
 import os
 import atexit
 import sys
 import uuid
+import uuid
+from flask import Flask, jsonify, make_response
 import redis
 
 from flask import Flask, make_response, jsonify
@@ -46,8 +49,9 @@ def create_order(user_id):
     if not user_data:
         return make_response(jsonify({}), 400)
 
+    order_id = str(uuid.uuid4())
+
     with db.pipeline() as pipe:
-        order_id = str(uuid.uuid4())
         pipe.hset(f'order_id:{order_id}', 'user_id', user_id)
         pipe.hset(f'order_id:{order_id}', 'paid', 0)
         pipe.hset(f'order_id:{order_id}', 'items', "")

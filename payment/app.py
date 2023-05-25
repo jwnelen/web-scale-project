@@ -1,11 +1,12 @@
 import os
 import atexit
+import uuid
 from flask import Flask, jsonify, make_response
 import redis
-import uuid
 
 from backend.docker_connector import DockerConnector
 from backend.k8s_connector import K8sConnector
+from redis import Redis
 
 app = Flask("payment-service")
 gateway_url = ""
@@ -13,10 +14,10 @@ gateway_url = ""
 if 'GATEWAY_URL' in os.environ:
     gateway_url = os.environ['GATEWAY_URL']
 
-db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
-                              port=int(os.environ['REDIS_PORT']),
-                              password=os.environ['REDIS_PASSWORD'],
-                              db=int(os.environ['REDIS_DB']))
+db: Redis = Redis(host=os.environ['REDIS_HOST'],
+                  port=int(os.environ['REDIS_PORT']),
+                  password=os.environ['REDIS_PASSWORD'],
+                  db=int(os.environ['REDIS_DB']))
 
 connector = DockerConnector(gateway_url)
 #connector = K8sConnector()
