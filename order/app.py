@@ -29,6 +29,10 @@ connector = DockerConnector(gateway_url)
 def close_db_connection():
     db.close()
 
+gateway_url = ""
+
+if 'GATEWAY_URL' in os.environ:
+    gateway_url = os.environ['GATEWAY_URL']
 
 atexit.register(close_db_connection)
 
@@ -75,11 +79,30 @@ def remove_order(order_id):
 
 @app.post('/addItem/<order_id>/<item_id>')
 def add_item(order_id, item_id):
-    order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
-    order_items += str(item_id) + ","
-    db.hset(f'order_id:{order_id}', 'items', order_items)
-    data = {}
-    return make_response(jsonify(data), 200)
+    # Check the price of the item
+    url = f"{gateway_url}/stock/find/{item_id}"
+    result = requests.get(url).json()
+    result = result.json()
+
+    if result == None:
+        response = make_response(f"Item not found {result, url} ")
+        return response, 404
+
+    response = make_response("")
+    with db.pipeline() as pipe:
+        # Get information
+        order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
+        total_cost = db.hget(f'order_id:{order_id}', 'total_cost').decode("utf-8")
+
+        order_items += str(item_id)+","
+        total_cost = int(total_cost) + int(result['price'])
+
+        # Update information
+        db.hset(f'order_id:{order_id}', 'items', order_items)
+        db.hset(f'order_id:{order_id}', 'total_cost', total_cost)
+        pipe.execute()
+
+    return response, 200
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')
