@@ -1,26 +1,49 @@
 import os
 import atexit
-from flask import Flask, make_response, jsonify
+import threading
+
+from flask import Flask, jsonify, make_response
 import redis
 import uuid
 
 from backend.docker_connector import DockerConnector
+from backend.eventbus_connectior import Eventbus_Connector
 from backend.k8s_connector import K8sConnector
 
-app = Flask("stock-service")
 gateway_url = ""
+bootstrap_servers = ""
 
 if 'GATEWAY_URL' in os.environ:
     gateway_url = os.environ['GATEWAY_URL']
+
+if 'BOOTSTRAP_SERVERS' in os.environ:
+    bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
 
 db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               port=int(os.environ['REDIS_PORT']),
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
 
+#connector = Eventbus_Connector(bootstrap_servers)
 connector = DockerConnector(gateway_url)
 #connector = K8sConnector()
 
+
+def consume_messages():
+    for message in connector.consumer:
+        data = message.value
+        if data['message_type'] == "create_order":
+            pass
+
+
+if isinstance(connector, Eventbus_Connector):
+    connector.consumer.subscribe('orders')
+
+    consume_thread = threading.Thread(target=consume_messages)
+    consume_thread.daemon = True  # Allow program to exit even if thread is still running
+    consume_thread.start()
+
+app = Flask("stock-service")
 
 def close_db_connection():
     db.close()

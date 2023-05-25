@@ -19,7 +19,7 @@ class K8sConnector(Connector):
         return requests.post(f"http://user-service:5000/cancel/{user_id}/{order_id}")
 
     def payment_status(self, user_id, order_id):
-        return requests.post(f"http://user-service:5000/status/{user_id}/{order_id}")
+        return requests.get(f"http://user-service:5000/status/{user_id}/{order_id}").json()
 
     def payment_add_funds(self, user_id, amount):
         return requests.post(f"http://user-service:5000/add_funds/{user_id}/{amount}")
