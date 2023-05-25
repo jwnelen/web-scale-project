@@ -6,5 +6,5 @@ helm uninstall nginx
 cd k8s
 kubectl delete -f .
 
-# Comment this out when testing, it will save a lot of time!
-gcloud container clusters delete app-cluster --region=europe-west4
+# # Uncomment to delete cluster
+#gcloud container clusters delete app-cluster --region=europe-west4

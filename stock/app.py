@@ -18,8 +18,8 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
 
-connector = DockerConnector(gateway_url)
-#connector = K8sConnector()
+#connector = DockerConnector(gateway_url)
+connector = K8sConnector()
 
 
 def close_db_connection():
