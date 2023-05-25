@@ -80,29 +80,25 @@ def remove_order(order_id):
 @app.post('/addItem/<order_id>/<item_id>')
 def add_item(order_id, item_id):
     # Check the price of the item
-    url = f"{gateway_url}/stock/find/{item_id}"
-    result = requests.get(url).json()
-    result = result.json()
+    result = connector.stock_find(item_id)
 
     if result == None:
-        response = make_response(f"Item not found {result, url} ")
-        return response, 404
+        return make_response(jsonify({})), 404
 
-    response = make_response("")
     with db.pipeline() as pipe:
         # Get information
         order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
         total_cost = db.hget(f'order_id:{order_id}', 'total_cost').decode("utf-8")
 
-        order_items += str(item_id)+","
+        order_items += str(item_id) + ","
         total_cost = int(total_cost) + int(result['price'])
 
         # Update information
-        db.hset(f'order_id:{order_id}', 'items', order_items)
-        db.hset(f'order_id:{order_id}', 'total_cost', total_cost)
+        pipe.hset(f'order_id:{order_id}', 'items', order_items)
+        pipe.hset(f'order_id:{order_id}', 'total_cost', total_cost)
         pipe.execute()
 
-    return response, 200
+    return make_response(jsonify({"new_total_cost": total_cost})), 200
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')
@@ -120,12 +116,13 @@ def find_order(order_id):
     if not query_result:
         return make_response(jsonify({}), 400)
 
-    result = {}
-    result['order_id'] = order_id
-    result['user_id'] = query_result[b'user_id'].decode("utf-8")
-    result['paid'] = query_result[b'paid'].decode("utf-8")
-    result['items'] = query_result[b'items'].decode("utf-8")
-    result['total_cost'] = query_result[b'total_cost'].decode("utf-8")
+    result = {
+        'order_id': order_id,
+        'user_id': query_result[b'user_id'].decode("utf-8"),
+        'paid': query_result[b'paid'].decode("utf-8"),
+        'items': query_result[b'items'].decode("utf-8"),
+        'total_cost': query_result[b'total_cost'].decode("utf-8")
+    }
 
     return make_response(jsonify(result), 200)
 
