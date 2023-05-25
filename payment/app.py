@@ -26,8 +26,6 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
 
 # connector = Eventbus_Connector(bootstrap_servers)
 connector = DockerConnector(gateway_url)
-
-
 # connector = K8sConnector()
 
 
@@ -112,7 +110,7 @@ def add_credit(user_id: str, amount: int):
     amount = round(float(amount))
     data = {'done': False}
 
-    with db.pipeline() as pipe:
+    with db.pipeline(transaction=True) as pipe:
         pipe.exists(f'user_id:{user_id}')
         exists = pipe.execute()[0]
         if exists:
@@ -136,7 +134,7 @@ def response_remove_credit(user_id: str, order_id: str, amount: int):
 
 def remove_credit(user_id: str, order_id: str, amount: int):
     amount = int(amount)
-    with db.pipeline() as pipe:
+    with db.pipeline(transaction=True) as pipe:
         pipe.hget(f'user_id:{user_id}', 'credit')
         credit = int(pipe.execute()[0].decode('utf-8'))
 
@@ -161,7 +159,7 @@ def response_cancel_payment(user_id: str, order_id: str):
 
 
 def cancel_payment(user_id: str, order_id: str):
-    with db.pipeline() as pipe:
+    with db.pipeline(transaction=True) as pipe:
         pipe.hget(f'order_id:{order_id}', 'paid')
         status = pipe.execute()[0].decode('utf-8')
         if status == 1:

@@ -53,10 +53,6 @@ def close_db_connection():
 atexit.register(close_db_connection)
 
 
-def status_code_is_success(status_code: int) -> bool:
-    return 200 <= status_code < 300
-
-
 @app.route("/")
 def hello():
     return "Hello World!"
@@ -69,7 +65,7 @@ def create_order(user_id):
     if not user_data:
         return make_response(jsonify({}), 400)
 
-    with db.pipeline() as pipe:
+    with db.pipeline(transaction=True) as pipe:
         order_id = str(uuid.uuid4())
         pipe.hset(f'order_id:{order_id}', 'user_id', user_id)
         pipe.hset(f'order_id:{order_id}', 'paid', 0)

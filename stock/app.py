@@ -24,9 +24,11 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
 
-#connector = Eventbus_Connector(bootstrap_servers)
+# connector = Eventbus_Connector(bootstrap_servers)
 connector = DockerConnector(gateway_url)
-#connector = K8sConnector()
+
+
+# connector = K8sConnector()
 
 
 def consume_messages():
@@ -45,6 +47,7 @@ if isinstance(connector, Eventbus_Connector):
 
 app = Flask("stock-service")
 
+
 def close_db_connection():
     db.close()
 
@@ -58,57 +61,85 @@ def hello():
 
 
 @app.post('/item/create/<price>')
+def response_create_item(price: int):
+    data = create_item(price)
+    return make_response(jsonify(data), 200)
+
+
 def create_item(price: int):
-    with db.pipeline() as pipe:
+    with db.pipeline(transaction=True) as pipe:
         item_id = uuid.uuid4()
         pipe.hset(f'item_id:{item_id}', 'price', round(float(price)))
         pipe.hset(f'item_id:{item_id}', 'stock', 0)
         pipe.execute()
     data = {'item_id': item_id}
-    return make_response(jsonify(data), 200)
+    return data
 
 
 @app.get('/find/<item_id>')
+def response_find_item(item_id: str):
+    data = find_item(item_id)
+    if not data:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(data), 200)
+
+
 def find_item(item_id: str):
     item = db.hgetall(f'item_id:{item_id}')
     if item is None:
-        return make_response(jsonify({}), 400)
+        return {}
     items = {}
     for k, v in item.items():
         items[k.decode('utf-8')] = round(float(v.decode('utf-8')))
-    return make_response(jsonify(items), 200)
+    return items
 
 
 @app.post('/add/<item_id>/<amount>')
+def response_add_stock(item_id: str, amount: int):
+    success = add_stock(item_id, amount)
+    if success:
+        return make_response(jsonify({}), 200)
+    else:
+        return make_response(jsonify({}), 400)
+
+
 def add_stock(item_id: str, amount: int):
-    with db.pipeline() as pipe:
+    with db.pipeline(transaction=True) as pipe:
         pipe.exists(f'item_id:{item_id}')
         exists = pipe.execute()[0]
         if exists:
             pipe.hincrby(f'item_id:{item_id}', 'stock', int(amount))
             pipe.execute()
-            return make_response(jsonify({}), 200)
+            return True
         else:
-            return make_response(jsonify({}), 400)
+            return False
 
 
 @app.post('/subtract/<item_id>/<amount>')
+def response_remove_stock(item_id: str, amount: int):
+    data = remove_stock(item_id, amount)
+    if not data:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(data), 200)
+
+
 def remove_stock(item_id: str, amount: int):
-    data = {}
-    with db.pipeline() as pipe:
+    with db.pipeline(transaction=True) as pipe:
         pipe.exists(f'item_id:{item_id}')
         exists = pipe.execute()[0]
 
         if not exists:
-            return data, 400
+            return {}
         pipe.hget(f'item_id:{item_id}', 'stock')
         stock = int(pipe.execute()[0].decode('utf-8'))
 
         if stock < int(amount):
-            return make_response(jsonify({}), 400)
+            return {}
 
         pipe.hincrby(f'item_id:{item_id}', 'stock', -int(amount))
         stock -= int(amount)
         pipe.execute()
     data = {'stock': stock}
-    return make_response(jsonify(data), 200)
+    return data
