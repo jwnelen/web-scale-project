@@ -13,7 +13,7 @@ env:
 
 jobs:
   setup-build-publish-deploy:
-    name: Setup Google Cloud
+    name: Setup, Build, Publish, and Deploy
     runs-on: ubuntu-latest
     environment: production
 
