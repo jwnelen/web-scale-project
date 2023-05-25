@@ -3,13 +3,12 @@ name: Build and Deploy to GKE
 on:
   push:
     branches:
-      - main
+      - consistency_order_price
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  # TODO: THESE NEED TO BE UPDATED
   GKE_CLUSTER: autopilot-cluster-1    # Add your cluster name here.
-  GKE_ZONE: us-central1   # Add your cluster zone here.
+  GKE_ZONE: europe-west4   # Add your cluster zone here.
   DEPLOYMENT_NAME: gke-test # Add your deployment name here.
 
 jobs:
@@ -23,42 +22,50 @@ jobs:
       contents: read
 
     steps:
-    # Checkout the repo
-    - name: Checkout
-      uses: actions/checkout@v3
+      # Checkout the repo
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    # Setup gcloud CLI
-    - uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: '${{ secrets.GKE_SA_KEY }}'
+      # Setup gcloud CLI
+      - uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GKE_SA_KEY }}'
 
-    # Configure Docker to use the gcloud command-line tool as a credential
-    # helper for authentication
-    - run: |-
-        gcloud --quiet auth configure-docker
+      - run: |-
+          gcloud config set project $PROJECT_ID
+          gcloud config set compute/zone $GKE_ZONE
+          gcloud container clusters create-auto app-cluster --region=europe-west4
+          gcloud container clusters get-credentials app-cluster --region=europe-west4
 
-    # Get the GKE credentials so we can deploy to the cluster
-    - uses: google-github-actions/get-gke-credentials@db150f2cc60d1716e61922b832eae71d2a45938f
-      with:
-        cluster_name: ${{ env.GKE_CLUSTER }}
-        location: ${{ env.GKE_ZONE }}
+      # Configure Docker to use the gcloud command-line tool as a credential
+      # helper for authentication
+      - run: |-
+          gcloud --quiet auth configure-docker
+          kubectl config use-context gke_wdmproject23-v2_europe-west4_app-cluster
+          
 
-    - id: 'docker-compose-build'
-      run: 'docker-compose build'
+      # Get the GKE credentials so we can deploy to the cluster
+      - uses: google-github-actions/get-gke-credentials@db150f2cc60d1716e61922b832eae71d2a45938f
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_ZONE }}
 
-    - id: 'tag-dockers'
-      run: |-
-        docker tag order gcr.io/$PROJECT_ID/order:$GITHUB_SHA
-        docker tag stock gcr.io/$PROJECT_ID/stock:$GITHUB_SHA
-        docker tag user gcr.io/$PROJECT_ID/user:$GITHUB_SHA
+      - id: 'docker-compose-build'
+        run: 'docker-compose build'
 
-    - name: Publish
-      run: |-
-        docker push "gcr.io/$PROJECT_ID/order:$GITHUB_SHA"
-        docker push "gcr.io/$PROJECT_ID/stock:$GITHUB_SHA"
-        docker push "gcr.io/$PROJECT_ID/user:$GITHUB_SHA"  
+      - id: 'tag-dockers'
+        run: |-
+          docker tag order gcr.io/$PROJECT_ID/order:$GITHUB_SHA
+          docker tag stock gcr.io/$PROJECT_ID/stock:$GITHUB_SHA
+          docker tag user gcr.io/$PROJECT_ID/user:$GITHUB_SHA
 
-    - name: Deploy
-      run: |-
-        cd k8s-gcloud
-        kubectl apply -f .
+      - name: Publish
+        run: |-
+          docker push "gcr.io/$PROJECT_ID/order:$GITHUB_SHA"
+          docker push "gcr.io/$PROJECT_ID/stock:$GITHUB_SHA"
+          docker push "gcr.io/$PROJECT_ID/user:$GITHUB_SHA"  
+
+      - name: Deploy
+        run: |-
+          cd k8s-gcloud
+          kubectl apply -f .
