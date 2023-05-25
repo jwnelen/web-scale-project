@@ -4,6 +4,8 @@ from flask import Flask, make_response, jsonify
 import redis
 import uuid
 
+from backend.docker_connector import DockerConnector
+
 app = Flask("stock-service")
 gateway_url = ""
 
@@ -14,6 +16,8 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               port=int(os.environ['REDIS_PORT']),
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
+
+connector = DockerConnector(gateway_url)
 
 
 def close_db_connection():

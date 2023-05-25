@@ -28,6 +28,8 @@ services:
       context: ./
       dockerfile: ./stock/Dockerfile
     image: stock:latest
+    environment:
+      - GATEWAY_URL=http://gateway:80
     command: gunicorn -b 0.0.0.0:5000 --chdir /stock app:app -w 1 --timeout 10
     env_file:
       - env/stock_redis.env
@@ -41,6 +43,8 @@ services:
       context: ./
       dockerfile: ./payment/Dockerfile
     image: user:latest
+    environment:
+      - GATEWAY_URL=http://gateway:80
     command: gunicorn -b 0.0.0.0:5000 --chdir /payment app:app -w 1 --timeout 10
     env_file:
       - env/payment_redis.env
