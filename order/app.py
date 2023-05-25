@@ -1,10 +1,6 @@
-import json
 import os
 import atexit
-import sys
 import uuid
-import uuid
-from flask import Flask, jsonify, make_response
 import redis
 
 from flask import Flask, make_response, jsonify
@@ -23,11 +19,14 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               db=int(os.environ['REDIS_DB']))
 
 connector = DockerConnector(gateway_url)
-#connector = K8sConnector()
+
+
+# connector = K8sConnector()
 
 
 def close_db_connection():
     db.close()
+
 
 gateway_url = ""
 
@@ -82,7 +81,7 @@ def add_item(order_id, item_id):
     # Check the price of the item
     result = connector.stock_find(item_id)
 
-    if result == None:
+    if result is None:
         return make_response(jsonify({})), 404
 
     with db.pipeline() as pipe:
@@ -138,7 +137,7 @@ def checkout(order_id):
             continue
         result = connector.stock_find(item)
 
-        if result != None:
+        if result is not None:
             total_cost += int(result['price'])
 
     payment = connector.payment_pay(order[b'user_id'].decode('utf-8'), order_id, total_cost)

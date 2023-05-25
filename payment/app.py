@@ -2,10 +2,8 @@ import os
 import atexit
 import uuid
 from flask import Flask, jsonify, make_response
-import redis
 
 from backend.docker_connector import DockerConnector
-from backend.k8s_connector import K8sConnector
 from redis import Redis
 
 app = Flask("payment-service")
@@ -20,7 +18,9 @@ db: Redis = Redis(host=os.environ['REDIS_HOST'],
                   db=int(os.environ['REDIS_DB']))
 
 connector = DockerConnector(gateway_url)
-#connector = K8sConnector()
+
+
+# connector = K8sConnector()
 
 
 def close_db_connection():
