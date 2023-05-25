@@ -34,8 +34,8 @@ jobs:
       - run: |-
           gcloud config set project $PROJECT_ID
           gcloud config set compute/zone $GKE_ZONE
-#          Uncomment if you want to create a new cluster
-#          gcloud container clusters create-auto app-cluster --region=europe-west4
+        # Uncomment if you want to create a new cluster
+        # gcloud container clusters create-auto app-cluster --region=europe-west4
           gcloud container clusters get-credentials app-cluster --region=europe-west4
 
       # Configure Docker to use the gcloud command-line tool as a credential
