@@ -16,13 +16,18 @@ services:
     environment:
       - GATEWAY_URL=http://gateway:80
       - BOOTSTRAP_SERVERS=kafka:9092
-    command: gunicorn -b 0.0.0.0:5000 --chdir /order app:app -w 1 --timeout 10
+    command: gunicorn -b 0.0.0.0:5000 --chdir /order app:app -w 1 --access-logfile - --error-logfile - --log-level debug --timeout 10
     env_file:
       - env/order_redis.env
 
   order-db:
     image: redis:latest
     command: redis-server --requirepass redis --maxmemory 512mb
+    # Expose the server on port 7000
+    environment:
+      - REDIS_PORT=7000
+    ports:
+      - "7000:6379"
 
   stock-service:
     build:
@@ -32,30 +37,39 @@ services:
     environment:
       - GATEWAY_URL=http://gateway:80
       - BOOTSTRAP_SERVERS=kafka:9092
-    command: gunicorn -b 0.0.0.0:5000 --chdir /stock app:app -w 1 --timeout 10
+    command: gunicorn -b 0.0.0.0:5000 --chdir /stock app:app -w 1 --access-logfile - --error-logfile - --log-level debug --timeout 10
+
     env_file:
       - env/stock_redis.env
 
   stock-db:
     image: redis:latest
     command: redis-server --requirepass redis --maxmemory 512mb
+    environment:
+      - REDIS_PORT=7002
+    ports:
+      - "7002:6379"
 
   payment-service:
     build:
       context: ./
       dockerfile: ./payment/Dockerfile
     image: user:latest
+
     environment:
       - GATEWAY_URL=http://gateway:80
       - BOOTSTRAP_SERVERS=kafka:9092
-    command: gunicorn -b 0.0.0.0:5000 --chdir /payment app:app -w 1 --timeout 10
+    command: gunicorn -b 0.0.0.0:5000 --chdir /payment app:app -w 1 --access-logfile - --error-logfile - --log-level debug --timeout 10
     env_file:
       - env/payment_redis.env
 
   payment-db:
     image: redis:latest
     command: redis-server --requirepass redis --maxmemory 512mb
-
+    environment:
+      - REDIS_PORT=7001
+    ports:
+      - "7001:6379"
 
   kafka:
     image: docker.io/bitnami/kafka:3.4
@@ -79,4 +93,3 @@ services:
 volumes:
   kafka_data:
     driver: local
-

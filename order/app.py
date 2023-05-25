@@ -2,13 +2,12 @@ import os
 import atexit
 import threading
 import uuid
-import redis
 
 from flask import Flask, make_response, jsonify
-
 from backend.docker_connector import DockerConnector
 from backend.eventbus_connectior import Eventbus_Connector
 from backend.k8s_connector import K8sConnector
+from redis import Redis
 
 gateway_url = ""
 bootstrap_servers = ""
@@ -19,10 +18,10 @@ if 'GATEWAY_URL' in os.environ:
 if 'BOOTSTRAP_SERVERS' in os.environ:
     bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
 
-db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
-                              port=int(os.environ['REDIS_PORT']),
-                              password=os.environ['REDIS_PASSWORD'],
-                              db=int(os.environ['REDIS_DB']))
+db: Redis = Redis(host=os.environ['REDIS_HOST'],
+                  port=int(os.environ['REDIS_PORT']),
+                  password=os.environ['REDIS_PASSWORD'],
+                  db=int(os.environ['REDIS_DB']))
 
 # connector = Eventbus_Connector(bootstrap_servers)
 connector = DockerConnector(gateway_url)
@@ -46,9 +45,15 @@ if isinstance(connector, Eventbus_Connector):
 app = Flask("order-service")
 
 
+
 def close_db_connection():
     db.close()
 
+
+gateway_url = ""
+
+if 'GATEWAY_URL' in os.environ:
+    gateway_url = os.environ['GATEWAY_URL']
 
 atexit.register(close_db_connection)
 
@@ -73,8 +78,9 @@ def create_order(user_id):
     if not user_data:
         return {}
 
+    order_id = str(uuid.uuid4())
+
     with db.pipeline(transaction=True) as pipe:
-        order_id = str(uuid.uuid4())
         pipe.hset(f'order_id:{order_id}', 'user_id', user_id)
         pipe.hset(f'order_id:{order_id}', 'paid', 0)
         pipe.hset(f'order_id:{order_id}', 'items', "")
@@ -106,14 +112,35 @@ def remove_order(order_id):
 @app.post('/addItem/<order_id>/<item_id>')
 def response_add_item(order_id, item_id):
     data = add_item(order_id, item_id)
+
+    if not data:
+        return make_response(jsonify({}), 404)
+
     return make_response(jsonify(data), 200)
 
 
 def add_item(order_id, item_id):
-    order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
-    order_items += str(item_id) + ","
-    db.hset(f'order_id:{order_id}', 'items', order_items)
-    data = {}
+    # Check the price of the item
+    result = connector.stock_find(item_id)
+
+    if result is None:
+        return {}
+
+    with db.pipeline() as pipe:
+        # Get information
+        order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
+        total_cost = db.hget(f'order_id:{order_id}', 'total_cost').decode("utf-8")
+
+        order_items += str(item_id) + ","
+        total_cost = int(total_cost) + int(result['price'])
+
+        # Update information
+        pipe.hset(f'order_id:{order_id}', 'items', order_items)
+        pipe.hset(f'order_id:{order_id}', 'total_cost', total_cost)
+        pipe.execute()
+
+    data = {"new_total_cost": total_cost}
+
     return data
 
 
@@ -147,12 +174,13 @@ def find_order(order_id):
     if not query_result:
         return {}
 
-    result = {}
-    result['order_id'] = order_id
-    result['user_id'] = query_result[b'user_id'].decode("utf-8")
-    result['paid'] = query_result[b'paid'].decode("utf-8")
-    result['items'] = query_result[b'items'].decode("utf-8")
-    result['total_cost'] = query_result[b'total_cost'].decode("utf-8")
+    result = {
+        'order_id': order_id,
+        'user_id': query_result[b'user_id'].decode("utf-8"),
+        'paid': query_result[b'paid'].decode("utf-8"),
+        'items': query_result[b'items'].decode("utf-8"),
+        'total_cost': query_result[b'total_cost'].decode("utf-8")
+    }
 
     return result
 

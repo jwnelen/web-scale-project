@@ -1,14 +1,13 @@
 import os
 import atexit
 import threading
-
-from flask import Flask, jsonify, make_response
-import redis
 import uuid
 
+from flask import Flask, jsonify, make_response
 from backend.docker_connector import DockerConnector
 from backend.eventbus_connectior import Eventbus_Connector
 from backend.k8s_connector import K8sConnector
+from redis import Redis
 
 gateway_url = ""
 bootstrap_servers = ""
@@ -19,15 +18,13 @@ if 'GATEWAY_URL' in os.environ:
 if 'BOOTSTRAP_SERVERS' in os.environ:
     bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
 
-db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
-                              port=int(os.environ['REDIS_PORT']),
-                              password=os.environ['REDIS_PASSWORD'],
-                              db=int(os.environ['REDIS_DB']))
+db: Redis = Redis(host=os.environ['REDIS_HOST'],
+                  port=int(os.environ['REDIS_PORT']),
+                  password=os.environ['REDIS_PASSWORD'],
+                  db=int(os.environ['REDIS_DB']))
 
 # connector = Eventbus_Connector(bootstrap_servers)
 connector = DockerConnector(gateway_url)
-
-
 # connector = K8sConnector()
 
 
