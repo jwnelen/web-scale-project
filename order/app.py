@@ -24,7 +24,7 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               password=os.environ['REDIS_PASSWORD'],
                               db=int(os.environ['REDIS_DB']))
 
-#connector = Eventbus_Connector(bootstrap_servers)
+# connector = Eventbus_Connector(bootstrap_servers)
 connector = DockerConnector(gateway_url)
 # connector = K8sConnector()
 
@@ -59,11 +59,19 @@ def hello():
 
 
 @app.post('/create/<user_id>')
+def response_create_order(user_id):
+    data = create_order(user_id)
+    if not data:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(data), 200)
+
+
 def create_order(user_id):
     user_data = connector.payment_find_user(user_id)
 
     if not user_data:
-        return make_response(jsonify({}), 400)
+        return {}
 
     with db.pipeline(transaction=True) as pipe:
         order_id = str(uuid.uuid4())
@@ -75,42 +83,69 @@ def create_order(user_id):
 
     data = {"order_id": order_id}
 
-    return make_response(jsonify(data), 200)
+    return data
 
 
 @app.delete('/remove/<order_id>')
-def remove_order(order_id):
-    result = db.hdel(f"order_id:{order_id}", "user_id")
+def response_remove_order(order_id):
+    succeeded = remove_order(order_id)
 
-    if not result:
+    if not succeeded:
         return make_response(jsonify({}), 400)
 
     return make_response(jsonify({}), 200)
 
 
+def remove_order(order_id):
+    result = db.hdel(f"order_id:{order_id}", "user_id")
+    if not result:
+        return False
+    return True
+
+
 @app.post('/addItem/<order_id>/<item_id>')
+def response_add_item(order_id, item_id):
+    data = add_item(order_id, item_id)
+    return make_response(jsonify(data), 200)
+
+
 def add_item(order_id, item_id):
     order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
     order_items += str(item_id) + ","
     db.hset(f'order_id:{order_id}', 'items', order_items)
     data = {}
-    return make_response(jsonify(data), 200)
+    return data
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')
+def response_remove_item(order_id, item_id):
+    data = remove_item(order_id, item_id)
+    return make_response(jsonify(data), 200)
+
+
 def remove_item(order_id, item_id):
     order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
     order_items = str.replace(order_items, str(item_id) + ",", "")
     db.hset(f'order_id:{order_id}', 'items', order_items)
-    return make_response(jsonify({}), 200)
+    data = {}
+    return data
 
 
 @app.get('/find/<order_id>')
+def response_find_order(order_id):
+    data = find_order(order_id)
+
+    if not data:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(data), 200)
+
+
 def find_order(order_id):
     query_result = db.hgetall(f'order_id:{order_id}')
 
     if not query_result:
-        return make_response(jsonify({}), 400)
+        return {}
 
     result = {}
     result['order_id'] = order_id
@@ -119,10 +154,19 @@ def find_order(order_id):
     result['items'] = query_result[b'items'].decode("utf-8")
     result['total_cost'] = query_result[b'total_cost'].decode("utf-8")
 
-    return make_response(jsonify(result), 200)
+    return result
 
 
 @app.post('/checkout/<order_id>')
+def response_checkout(order_id):
+    succeeded = checkout(order_id)
+
+    if not succeeded:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify({}), 200)
+
+
 def checkout(order_id):
     order = db.hgetall(f'order_id:{order_id}')
     items = order[b'items'].decode("utf-8")
@@ -133,18 +177,18 @@ def checkout(order_id):
             continue
         result = connector.stock_find(item)
 
-        if result != None:
+        if result is not None:
             total_cost += int(result['price'])
 
     payment = connector.payment_pay(order[b'user_id'].decode('utf-8'), order_id, total_cost)
 
     if payment.status_code != 200:
-        return make_response(jsonify({}), payment.status_code)
+        return False
     for item in items.split(","):
         if item == '':
             continue
         subtract = connector.stock_subtract(item, 1)
         if subtract.status_code != 200:
-            return make_response(jsonify({}), subtract.status_code)
+            return False
 
-    return make_response(jsonify({}), 200)
+    return True

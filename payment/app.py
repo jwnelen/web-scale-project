@@ -124,9 +124,9 @@ def add_credit(user_id: str, amount: int):
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def response_remove_credit(user_id: str, order_id: str, amount: int):
-    data = remove_credit(user_id, order_id, amount)
+    succeeded = remove_credit(user_id, order_id, amount)
 
-    if not data:
+    if not succeeded:
         return make_response(jsonify({}), 400)
 
     return make_response(jsonify({}), 200)
@@ -150,9 +150,9 @@ def remove_credit(user_id: str, order_id: str, amount: int):
 
 @app.post('/cancel/<user_id>/<order_id>')
 def response_cancel_payment(user_id: str, order_id: str):
-    data = cancel_payment(user_id, order_id)
+    succeeded = cancel_payment(user_id, order_id)
 
-    if not data:
+    if not succeeded:
         return make_response(jsonify({}), 400)
 
     return make_response(jsonify({}), 200)

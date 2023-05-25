@@ -97,8 +97,8 @@ def find_item(item_id: str):
 
 @app.post('/add/<item_id>/<amount>')
 def response_add_stock(item_id: str, amount: int):
-    success = add_stock(item_id, amount)
-    if success:
+    succeeded = add_stock(item_id, amount)
+    if succeeded:
         return make_response(jsonify({}), 200)
     else:
         return make_response(jsonify({}), 400)
