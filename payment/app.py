@@ -77,7 +77,7 @@ def remove_credit(user_id: str, order_id: str, amount: int):
         pipe.hset(f'user_id:{user_id}', 'credit', credit)
         pipe.execute()
 
-    return make_response(jsonify({}), 400)
+    return make_response(jsonify({}), 200)
 
 @app.post('/cancel/<user_id>/<order_id>')
 def cancel_payment(user_id: str, order_id: str):
