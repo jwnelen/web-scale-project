@@ -1,15 +1,17 @@
 import os
 import atexit
+import sys
 import uuid
 import redis
 
-from flask import Flask, make_response
-
-from docker_connector import DockerConnector
+from flask import Flask, make_response, jsonify
+from backend.docker_connector import DockerConnector
 
 app = Flask("order-service")
+gateway_url = ""
 
-gateway_url = os.environ['GATEWAY_URL']
+if 'GATEWAY_URL' in os.environ:
+    gateway_url = os.environ['GATEWAY_URL']
 
 db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               port=int(os.environ['REDIS_PORT']),
@@ -34,9 +36,8 @@ def status_code_is_success(status_code: int) -> bool:
 def create_order(user_id):
     user_data = connector.payment_find_user(user_id)
 
-    if not status_code_is_success(user_data.status_code):
-        data = {}
-        return data, 400
+    if not user_data:
+        return make_response(jsonify({}), 400)
 
     with db.pipeline() as pipe:
         order_id = str(uuid.uuid4())
@@ -48,65 +49,55 @@ def create_order(user_id):
 
     data = {"order_id": order_id}
 
-    return data, 200
+    return make_response(jsonify(data), 200)
 
 
 @app.delete('/remove/<order_id>')
 def remove_order(order_id):
     result = db.hdel(f"order_id:{order_id}", "user_id")
 
-    data = {}
-
     if not result:
-        return data, 400
+        return make_response(jsonify({}), 400)
 
-    return data, 200
+    return make_response(jsonify({}), 200)
 
 
 @app.post('/addItem/<order_id>/<item_id>')
 def add_item(order_id, item_id):
-    response = make_response("")
     order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
     order_items += str(item_id) + ","
     db.hset(f'order_id:{order_id}', 'items', order_items)
-
-    response.status_code = 200
-    return response
+    data = {}
+    return make_response(jsonify(data), 200)
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')
 def remove_item(order_id, item_id):
-    response = make_response("")
     order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
     order_items = str.replace(order_items, str(item_id) + ",", "")
     db.hset(f'order_id:{order_id}', 'items', order_items)
-
-    response.status_code = 200
-    return response
+    return make_response(jsonify({}), 200)
 
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
     query_result = db.hgetall(f'order_id:{order_id}')
 
-    result = {}
-
     if not query_result:
-        return result, 400
+        return make_response(jsonify({}), 400)
 
+    result = {}
     result['order_id'] = order_id
     result['user_id'] = query_result[b'user_id'].decode("utf-8")
     result['paid'] = query_result[b'paid'].decode("utf-8")
     result['items'] = query_result[b'items'].decode("utf-8")
     result['total_cost'] = query_result[b'total_cost'].decode("utf-8")
 
-    return result, 200
+    return make_response(jsonify(result), 200)
 
 
 @app.post('/checkout/<order_id>')
 def checkout(order_id):
-    response = make_response("")
-
     order = db.hgetall(f'order_id:{order_id}')
     items = order[b'items'].decode("utf-8")
 
@@ -122,14 +113,12 @@ def checkout(order_id):
     payment = connector.payment_pay(order[b'user_id'].decode('utf-8'), order_id, total_cost)
 
     if payment.status_code != 200:
-        response.status_code = payment.status_code
-        return response
+        return make_response(jsonify({}), payment.status_code)
     for item in items.split(","):
         if item == '':
             continue
         subtract = connector.stock_subtract(item, 1)
         if subtract.status_code != 200:
-            response.status_code = subtract.status_code
-            return response
-    response.status_code = 200
-    return response
+            return make_response(jsonify({}), subtract.status_code)
+
+    return make_response(jsonify({}), 200)

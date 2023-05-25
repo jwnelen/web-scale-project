@@ -1,4 +1,4 @@
-from connector import Connector
+from .connector import Connector
 
 
 class Eventbus_Connector(Connector):

@@ -40,7 +40,6 @@ class TestMicroservices(unittest.TestCase):
         self.assertTrue('user_id' in user)
 
         user_id: str = user['user_id']
-
         # Test /users/credit/add/<user_id>/<amount>
         add_credit_response = tu.add_credit_to_user(user_id, 15)
         self.assertTrue(tu.status_code_is_success(add_credit_response))
@@ -56,6 +55,7 @@ class TestMicroservices(unittest.TestCase):
 
         # create order in the order service and add item to the order
         order: dict = tu.create_order(user_id)
+
         self.assertTrue('order_id' in order)
 
         order_id: str = order['order_id']
@@ -69,6 +69,7 @@ class TestMicroservices(unittest.TestCase):
         self.assertTrue(tu.status_code_is_success(add_item_response))
 
         payment_response = tu.payment_pay(user_id, order_id, 10)
+
         self.assertTrue(tu.status_code_is_success(payment_response))
 
         credit_after_payment: int = tu.find_user(user_id)['credit']

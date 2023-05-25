@@ -1,6 +1,6 @@
 import requests
 
-from connector import Connector
+from .connector import Connector
 
 
 class K8sConnector(Connector):

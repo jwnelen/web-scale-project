@@ -1,10 +1,14 @@
 import os
 import atexit
-from flask import Flask, jsonify, make_response
+from flask import Flask, make_response, jsonify
 import redis
 import uuid
 
 app = Flask("stock-service")
+gateway_url = ""
+
+if 'GATEWAY_URL' in os.environ:
+    gateway_url = os.environ['GATEWAY_URL']
 
 db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               port=int(os.environ['REDIS_PORT']),
@@ -32,18 +36,18 @@ def create_item(price: int):
         pipe.hset(f'item_id:{item_id}', 'stock', 0)
         pipe.execute()
     data = {'item_id': item_id}
-    return data, 200
+    return make_response(jsonify(data), 200)
 
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
     item = db.hgetall(f'item_id:{item_id}')
     if item is None:
-        return {}, 400
+        return make_response(jsonify({}), 400)
     items = {}
     for k, v in item.items():
         items[k.decode('utf-8')] = round(float(v.decode('utf-8')))
-    return items, 200
+    return make_response(jsonify(items), 200)
 
 
 @app.post('/add/<item_id>/<amount>')
@@ -54,14 +58,13 @@ def add_stock(item_id: str, amount: int):
         if exists:     
             pipe.hincrby(f'item_id:{item_id}', 'stock', int(amount))
             pipe.execute()
-            return {}, 200
+            return make_response(jsonify({}), 200)
         else:
-            return {}, 400
+            return make_response(jsonify({}), 400)
 
 
 @app.post('/subtract/<item_id>/<amount>')
 def remove_stock(item_id: str, amount: int):
-    response = make_response("")
     data = {}
     with db.pipeline() as pipe:
         pipe.exists(f'item_id:{item_id}')
@@ -73,11 +76,10 @@ def remove_stock(item_id: str, amount: int):
         stock = int(pipe.execute()[0].decode('utf-8'))
 
         if stock < int(amount):
-            response.status_code = 400
-            return response
+            return make_response(jsonify({}), 400)
         
         pipe.hincrby(f'item_id:{item_id}', 'stock', -int(amount))
         stock -= int(amount)
         pipe.execute()
     data = {'stock': stock}
-    return data, 200
+    return make_response(jsonify(data), 200)

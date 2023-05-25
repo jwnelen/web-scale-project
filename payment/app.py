@@ -6,6 +6,10 @@ import uuid
 
 
 app = Flask("payment-service")
+gateway_url = ""
+
+if 'GATEWAY_URL' in os.environ:
+    gateway_url = os.environ['GATEWAY_URL']
 
 db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               port=int(os.environ['REDIS_PORT']),
@@ -31,9 +35,8 @@ def create_user():
         user_id = str(uuid.uuid4())
         pipe.hset(f"user_id:{user_id}", "credit", 0)
         pipe.execute()
-
     data = {"user_id": user_id}
-    return data, 200
+    return make_response(jsonify(data), 200)
 
 
 @app.get('/find_user/<user_id>')
@@ -42,7 +45,8 @@ def find_user(user_id: str):
     if not user_credit:
         return {}, 400
     user_credit = int(user_credit.decode('utf-8'))
-    return {"user_id": user_id, "credit": user_credit}, 200
+    data = {"user_id": user_id, "credit": user_credit}
+    return make_response(jsonify(data), 200)
 
 
 @app.post('/add_funds/<user_id>/<amount>')
@@ -56,46 +60,40 @@ def add_credit(user_id: str, amount: int):
             pipe.hincrby(f"user_id:{user_id}", "credit", amount)
             pipe.execute()
             data['done'] = True
-            return data, 200
+            return make_response(jsonify(data), 200)
         else:
-            return data, 400  
+            return make_response(jsonify(data), 400)
 
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def remove_credit(user_id: str, order_id: str, amount: int):
-    response = make_response("")
     amount = int(amount)
     with db.pipeline() as pipe:
         pipe.hget(f'user_id:{user_id}', 'credit')
         credit = int(pipe.execute()[0].decode('utf-8'))
         if credit < amount:
-            response.status_code = 400
-            return response
+            return make_response(jsonify({}), 400)
         credit -= amount
         pipe.hset(f'user_id:{user_id}', 'credit', credit)
-        result = pipe.execute()
+        pipe.execute()
 
-    response.status_code = 200
-    return response
+    return make_response(jsonify({}), 400)
 
 @app.post('/cancel/<user_id>/<order_id>')
 def cancel_payment(user_id: str, order_id: str):
-    response = make_response("")
     with db.pipeline() as pipe:
         pipe.hget(f'order_id:{order_id}', 'paid')
         status = pipe.execute()[0].decode('utf-8')
         if status == 1:
             pipe.hset(f'order_id:{order_id}', 'paid', 0)
-            result = pipe.execute()
-            response.status_code = 200
-            return response
-        else:
-            response.status_code = 400
+            pipe.execute()
+            return make_response(jsonify({}), 200)
     
     # return failure if we try to cancel payment for order which is not yet paid ?
-    return response
+    return make_response(jsonify({}), 400)
 
 @app.post('/status/<user_id>/<order_id>')
 def payment_status(user_id: str, order_id: str):
     status = db.hget(f'order_id:{order_id}', 'paid').decode('utf-8')
-    return jsonify({"paid": status})
+    data = {"paid": status}
+    return make_response(jsonify(data), 200)
