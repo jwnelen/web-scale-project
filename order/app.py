@@ -6,6 +6,7 @@ import redis
 
 from flask import Flask, make_response, jsonify
 from backend.docker_connector import DockerConnector
+from backend.k8s_connector import K8sConnector
 
 app = Flask("order-service")
 gateway_url = ""
@@ -19,6 +20,7 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               db=int(os.environ['REDIS_DB']))
 
 connector = DockerConnector(gateway_url)
+#connector = K8sConnector()
 
 
 def close_db_connection():
@@ -30,6 +32,11 @@ atexit.register(close_db_connection)
 
 def status_code_is_success(status_code: int) -> bool:
     return 200 <= status_code < 300
+
+
+@app.route("/")
+def hello():
+    return "Hello World!"
 
 
 @app.post('/create/<user_id>')

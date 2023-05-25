@@ -1,10 +1,14 @@
 import requests
 
-# Minikube
-ORDER_URL = STOCK_URL = PAYMENT_URL = "http://127.0.0.1:8000"
+env = "Docker"
 
-# GKE
-#ORDER_URL = STOCK_URL = PAYMENT_URL = "http://34.90.2.232:80"
+if env == "Minikube":
+    ORDER_URL = STOCK_URL = PAYMENT_URL = "http://127.0.0.1:80"
+elif env == "Docker":
+    ORDER_URL = STOCK_URL = PAYMENT_URL = "http://127.0.0.1:8000"
+elif env == "GKE":
+    external_ip = "12.34.12.34"
+    ORDER_URL = STOCK_URL = PAYMENT_URL = f"http://{external_ip}:80"
 
 
 ########################################################################################################################

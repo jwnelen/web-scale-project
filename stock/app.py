@@ -5,6 +5,7 @@ import redis
 import uuid
 
 from backend.docker_connector import DockerConnector
+from backend.k8s_connector import K8sConnector
 
 app = Flask("stock-service")
 gateway_url = ""
@@ -18,6 +19,7 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               db=int(os.environ['REDIS_DB']))
 
 connector = DockerConnector(gateway_url)
+#connector = K8sConnector()
 
 
 def close_db_connection():
@@ -59,7 +61,7 @@ def add_stock(item_id: str, amount: int):
     with db.pipeline() as pipe:
         pipe.exists(f'item_id:{item_id}')
         exists = pipe.execute()[0]
-        if exists:     
+        if exists:
             pipe.hincrby(f'item_id:{item_id}', 'stock', int(amount))
             pipe.execute()
             return make_response(jsonify({}), 200)
@@ -81,7 +83,7 @@ def remove_stock(item_id: str, amount: int):
 
         if stock < int(amount):
             return make_response(jsonify({}), 400)
-        
+
         pipe.hincrby(f'item_id:{item_id}', 'stock', -int(amount))
         stock -= int(amount)
         pipe.execute()
