@@ -2,14 +2,13 @@ import os
 import atexit
 import threading
 
-from flask import Flask, jsonify, make_response
+from flask import Flask, jsonify, make_response, g
 from uuid import uuid4
 from backend.docker_connector import DockerConnector
 from backend.eventbus_connectior import Eventbus_Connector
 from backend.k8s_connector import K8sConnector
-
+from redis import BlockingConnectionPool
 from redis import Redis
-
 
 gateway_url = ""
 bootstrap_servers = ""
@@ -20,15 +19,23 @@ if 'GATEWAY_URL' in os.environ:
 if 'BOOTSTRAP_SERVERS' in os.environ:
     bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
 
-db: Redis = Redis(host=os.environ['REDIS_HOST'],
-                  port=int(os.environ['REDIS_PORT']),
-                  password=os.environ['REDIS_PASSWORD'],
-                  db=int(os.environ['REDIS_DB']))
+# db: Redis = Redis(host=os.environ['REDIS_HOST'],
+#                   port=int(os.environ['REDIS_PORT']),
+#                   password=os.environ['REDIS_PASSWORD'],
+#                   db=int(os.environ['REDIS_DB']))
+
+pool = BlockingConnectionPool(
+    host=os.environ['REDIS_HOST'],
+    port=int(os.environ['REDIS_PORT']),
+    password=os.environ['REDIS_PASSWORD'],
+    db=int(os.environ['REDIS_DB']),
+    timeout=10
+)
 
 
 # connector = Eventbus_Connector(bootstrap_servers)
-connector = DockerConnector(gateway_url)
-# connector = K8sConnector()
+#connector = DockerConnector(gateway_url)
+connector = K8sConnector()
 
 
 def consume_messages():
@@ -48,16 +55,17 @@ if isinstance(connector, Eventbus_Connector):
 app = Flask("payment-service")
 
 
-def close_db_connection():
-    db.close()
+@app.before_request
+def before_request():
+    db: Redis = Redis(connection_pool=pool)
+    g.db = db
 
 
-atexit.register(close_db_connection)
-
-
-@app.route("/")
-def hello():
-    return "Hello World!"
+@app.after_request
+def after_request(response):
+    if g.db is not None:
+        g.db.close()
+    return response
 
 
 @app.post('/create_user')
@@ -67,12 +75,11 @@ def response_create_user():
 
 
 def create_user():
-    with db.pipeline(transaction=True) as pipe:
-        user_id = str(uuid4())
-
+    user_id = str(uuid4())
+    with g.db.pipeline(transaction=True) as pipe:
         key = f"user_id:{user_id}"
 
-        pipe.hset(key, "credit", 0)
+        pipe.hset(key, "credit", 0.0)
         pipe.execute()
 
     data = {"user_id": user_id}
@@ -88,19 +95,19 @@ def response_find_user(user_id: str):
 
 
 def find_user(user_id: str):
-    user_credit = db.hget(f"user_id:{user_id}", "credit")
+    user_credit = g.db.hget(f"user_id:{user_id}", "credit")
 
     if not user_credit:
         return {}
 
-    user_credit = int(user_credit.decode('utf-8'))
+    user_credit = float(user_credit.decode('utf-8'))
     data = {"user_id": user_id, "credit": user_credit}
 
     return data
 
 
 @app.post('/add_funds/<user_id>/<amount>')
-def response_add_credit(user_id: str, amount: int):
+def response_add_credit(user_id: str, amount: float):
     data = add_credit(user_id, amount)
     if data['done']:
         return make_response(jsonify(data), 200)
@@ -108,15 +115,18 @@ def response_add_credit(user_id: str, amount: int):
         return make_response(jsonify(data), 400)
 
 
-def add_credit(user_id: str, amount: int):
-    amount = round(float(amount))
+def add_credit(user_id: str, amount: float):
     data = {'done': False}
 
-    with db.pipeline(transaction=True) as pipe:
+    with g.db.pipeline(transaction=True) as pipe:
         pipe.exists(f'user_id:{user_id}')
         exists = pipe.execute()[0]
         if exists:
-            pipe.hincrby(f"user_id:{user_id}", "credit", amount)
+            pipe.hget(f'user_id:{user_id}', 'credit')
+            credit = float(pipe.execute()[0].decode('utf-8'))
+
+            credit += float(amount)
+            pipe.hset(f"user_id:{user_id}", "credit", credit)
             pipe.execute()
             data['done'] = True
             return data
@@ -125,7 +135,7 @@ def add_credit(user_id: str, amount: int):
 
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
-def response_remove_credit(user_id: str, order_id: str, amount: int):
+def response_remove_credit(user_id: str, order_id: str, amount: float):
     succeeded = remove_credit(user_id, order_id, amount)
 
     if not succeeded:
@@ -134,16 +144,15 @@ def response_remove_credit(user_id: str, order_id: str, amount: int):
     return make_response(jsonify({}), 200)
 
 
-def remove_credit(user_id: str, order_id: str, amount: int):
-    amount = int(amount)
-    with db.pipeline(transaction=True) as pipe:
+def remove_credit(user_id: str, order_id: str, amount: float):
+    with g.db.pipeline(transaction=True) as pipe:
         pipe.hget(f'user_id:{user_id}', 'credit')
-        credit = int(pipe.execute()[0].decode('utf-8'))
+        credit = float(pipe.execute()[0].decode('utf-8'))
 
-        if credit < amount:
+        if credit < float(amount):
             return False
 
-        credit -= amount
+        credit -= float(amount)
         pipe.hset(f'user_id:{user_id}', 'credit', credit)
         pipe.execute()
 
@@ -161,7 +170,7 @@ def response_cancel_payment(user_id: str, order_id: str):
 
 
 def cancel_payment(user_id: str, order_id: str):
-    with db.pipeline(transaction=True) as pipe:
+    with g.db.pipeline(transaction=True) as pipe:
         pipe.hget(f'order_id:{order_id}', 'paid')
         status = pipe.execute()[0].decode('utf-8')
         if status == 1:
@@ -184,8 +193,7 @@ def response_payment_status(user_id: str, order_id: str):
 
 
 def payment_status(user_id: str, order_id: str):
-    status = db.hget(f'order_id:{order_id}', 'paid').decode('utf-8')
-    db.execute()
+    status = g.db.hget(f'order_id:{order_id}', 'paid').decode('utf-8')
 
     if not status:
         return {}

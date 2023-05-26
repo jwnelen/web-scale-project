@@ -1,13 +1,13 @@
 import requests
 
-env = "Docker"
+env = "GKE"
 
 if env == "Minikube":
     ORDER_URL = STOCK_URL = PAYMENT_URL = "http://127.0.0.1:80"
 elif env == "Docker":
     ORDER_URL = STOCK_URL = PAYMENT_URL = "http://127.0.0.1:8000"
 elif env == "GKE":
-    external_ip = "34.91.202.37"
+    external_ip = "35.204.250.213"
     ORDER_URL = STOCK_URL = PAYMENT_URL = f"http://{external_ip}:80"
 
 

@@ -5,4 +5,4 @@ helm uninstall redis
 cd k8s
 kubectl delete -f .
 
-minikube stop
+#minikube stop

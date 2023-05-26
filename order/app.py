@@ -3,11 +3,11 @@ import atexit
 import threading
 import uuid
 
-from flask import Flask, make_response, jsonify
+from flask import Flask, make_response, jsonify, g
 from backend.docker_connector import DockerConnector
 from backend.eventbus_connectior import Eventbus_Connector
 from backend.k8s_connector import K8sConnector
-from redis import Redis
+from redis import Redis, BlockingConnectionPool
 
 gateway_url = ""
 bootstrap_servers = ""
@@ -18,14 +18,22 @@ if 'GATEWAY_URL' in os.environ:
 if 'BOOTSTRAP_SERVERS' in os.environ:
     bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
 
-db: Redis = Redis(host=os.environ['REDIS_HOST'],
-                  port=int(os.environ['REDIS_PORT']),
-                  password=os.environ['REDIS_PASSWORD'],
-                  db=int(os.environ['REDIS_DB']))
+# db: Redis = Redis(host=os.environ['REDIS_HOST'],
+#                   port=int(os.environ['REDIS_PORT']),
+#                   password=os.environ['REDIS_PASSWORD'],
+#                   db=int(os.environ['REDIS_DB']))
+
+pool = BlockingConnectionPool(
+    host=os.environ['REDIS_HOST'],
+    port=int(os.environ['REDIS_PORT']),
+    password=os.environ['REDIS_PASSWORD'],
+    db=int(os.environ['REDIS_DB']),
+    timeout=10
+)
 
 # connector = Eventbus_Connector(bootstrap_servers)
-connector = DockerConnector(gateway_url)
-# connector = K8sConnector()
+#connector = DockerConnector(gateway_url)
+connector = K8sConnector()
 
 
 def consume_messages():
@@ -45,22 +53,17 @@ if isinstance(connector, Eventbus_Connector):
 app = Flask("order-service")
 
 
-
-def close_db_connection():
-    db.close()
-
-
-gateway_url = ""
-
-if 'GATEWAY_URL' in os.environ:
-    gateway_url = os.environ['GATEWAY_URL']
-
-atexit.register(close_db_connection)
+@app.before_request
+def before_request():
+    db: Redis = Redis(connection_pool=pool)
+    g.db = db
 
 
-@app.route("/")
-def hello():
-    return "Hello World!"
+@app.after_request
+def after_request(response):
+    if g.db is not None:
+        g.db.close()
+    return response
 
 
 @app.post('/create/<user_id>')
@@ -80,11 +83,11 @@ def create_order(user_id):
 
     order_id = str(uuid.uuid4())
 
-    with db.pipeline(transaction=True) as pipe:
+    with g.db.pipeline(transaction=True) as pipe:
         pipe.hset(f'order_id:{order_id}', 'user_id', user_id)
         pipe.hset(f'order_id:{order_id}', 'paid', 0)
         pipe.hset(f'order_id:{order_id}', 'items', "")
-        pipe.hset(f'order_id:{order_id}', 'total_cost', 0)
+        pipe.hset(f'order_id:{order_id}', 'total_cost', 0.0)
         pipe.execute()
 
     data = {"order_id": order_id}
@@ -103,7 +106,7 @@ def response_remove_order(order_id):
 
 
 def remove_order(order_id):
-    result = db.hdel(f"order_id:{order_id}", "user_id")
+    result = g.db.hdel(f"order_id:{order_id}", "user_id")
     if not result:
         return False
     return True
@@ -126,13 +129,13 @@ def add_item(order_id, item_id):
     if result is None:
         return {}
 
-    with db.pipeline() as pipe:
+    with g.db.pipeline(transaction=True) as pipe:
         # Get information
-        order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
-        total_cost = db.hget(f'order_id:{order_id}', 'total_cost').decode("utf-8")
+        order_items = g.db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
+        total_cost = g.db.hget(f'order_id:{order_id}', 'total_cost').decode("utf-8")
 
         order_items += str(item_id) + ","
-        total_cost = int(total_cost) + int(result['price'])
+        total_cost = float(total_cost) + float(result['price'])
 
         # Update information
         pipe.hset(f'order_id:{order_id}', 'items', order_items)
@@ -151,9 +154,9 @@ def response_remove_item(order_id, item_id):
 
 
 def remove_item(order_id, item_id):
-    order_items = db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
+    order_items = g.db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
     order_items = str.replace(order_items, str(item_id) + ",", "")
-    db.hset(f'order_id:{order_id}', 'items', order_items)
+    g.db.hset(f'order_id:{order_id}', 'items', order_items)
     data = {}
     return data
 
@@ -169,7 +172,7 @@ def response_find_order(order_id):
 
 
 def find_order(order_id):
-    query_result = db.hgetall(f'order_id:{order_id}')
+    query_result = g.db.hgetall(f'order_id:{order_id}')
 
     if not query_result:
         return {}
@@ -196,17 +199,17 @@ def response_checkout(order_id):
 
 
 def checkout(order_id):
-    order = db.hgetall(f'order_id:{order_id}')
+    order = g.db.hgetall(f'order_id:{order_id}')
     items = order[b'items'].decode("utf-8")
 
-    total_cost = 0
+    total_cost = 0.0
     for item in items.split(","):
         if item == '':
             continue
         result = connector.stock_find(item)
 
         if result is not None:
-            total_cost += int(result['price'])
+            total_cost += float(result['price'])
 
     payment = connector.payment_pay(order[b'user_id'].decode('utf-8'), order_id, total_cost)
 

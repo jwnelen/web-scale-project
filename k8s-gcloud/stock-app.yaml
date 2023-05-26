@@ -3,20 +3,20 @@ kind: Service
 metadata:
   name: stock-service
 spec:
-  type: ClusterIP
   selector:
     component: stock
   ports:
     - port: 5000
       name: http
       targetPort: 5000
+  type: LoadBalancer
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: stock-deployment
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       component: stock
@@ -39,7 +39,7 @@ spec:
             - containerPort: 5000
           env:
             - name: REDIS_HOST
-              value: redis-master
+              value: stock-db
             - name: REDIS_PORT
               value: '6379'
             - name: REDIS_PASSWORD

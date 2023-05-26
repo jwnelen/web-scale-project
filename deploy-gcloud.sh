@@ -22,15 +22,19 @@ docker push gcr.io/wdmproject23-v2/stock:latest
 docker tag user gcr.io/wdmproject23-v2/user:latest
 docker push gcr.io/wdmproject23-v2/user:latest
 
-helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 
 helm repo update
 
-helm install -f helm-config/redis-helm-values.yaml redis bitnami/redis
 helm install -f helm-config/nginx-helm-values.yaml nginx ingress-nginx/ingress-nginx
 
 cd k8s-gcloud
+kubectl apply -f order-db.yaml
+kubectl apply -f stock-db.yaml
+kubectl apply -f user-db.yaml
+
+sleep 10
+
 kubectl apply -f order-app.yaml
 kubectl apply -f stock-app.yaml
 kubectl apply -f user-app.yaml
