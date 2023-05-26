@@ -18,8 +18,8 @@ spec:
           args: ["--requirepass", "redis"]  # Set Redis password
           resources:
             limits:
-              memory: "2Gi"
-              cpu: "1"
+              memory: "3Gi"
+              cpu: "2"
           volumeMounts:
             - name: redis-persistent-storage
               mountPath: /data
