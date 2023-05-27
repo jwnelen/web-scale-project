@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-rest-service
+spec:
+  selector:
+    component: payment-rest
+  ports:
+    - port: 5000
+      name: http
+      targetPort: 5000
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-rest-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: payment-rest
+  template:
+    metadata:
+      labels:
+        component: payment-rest
+    spec:
+      containers:
+        - name: payment-rest
+          image: gcr.io/wdmproject23-v2/payment-rest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          command: ["gunicorn"]
+          args: ["-b", "0.0.0.0:5000", "--chdir", "/src", "app:app"]
+          ports:
+            - containerPort: 5000

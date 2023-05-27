@@ -28,12 +28,12 @@ spec:
       volumes:
         - name: redis-persistent-storage
           persistentVolumeClaim:
-            claimName: redis-pvc-user
+            claimName: redis-pvc-payment
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: redis-pvc-user
+  name: redis-pvc-payment
 spec:
   accessModes:
     - ReadWriteOnce

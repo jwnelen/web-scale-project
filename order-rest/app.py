@@ -50,7 +50,7 @@ if isinstance(connector, Eventbus_Connector):
     consume_thread.daemon = True  # Allow program to exit even if thread is still running
     consume_thread.start()
 
-app = Flask("order-service")
+app = Flask("order-worker-service")
 
 
 @app.before_request

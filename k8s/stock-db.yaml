@@ -18,8 +18,8 @@ spec:
           args: ["--requirepass", "redis"]  # Set Redis password
           resources:
             limits:
-              memory: "4Gi"
-              cpu: "1"
+              memory: "3Gi"
+              cpu: "2"
           volumeMounts:
             - name: redis-persistent-storage
               mountPath: /data
@@ -28,12 +28,12 @@ spec:
       volumes:
         - name: redis-persistent-storage
           persistentVolumeClaim:
-            claimName: redis-pvc
+            claimName: redis-pvc-stock
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: redis-pvc
+  name: redis-pvc-stock
 spec:
   accessModes:
     - ReadWriteOnce

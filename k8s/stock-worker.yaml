@@ -1,40 +1,40 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: stock-service
+  name: stock-worker-service
 spec:
-  type: LoadBalancer
   selector:
-    component: stock
+    component: stock-worker
   ports:
     - port: 5000
       name: http
       targetPort: 5000
+  type: LoadBalancer
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: stock-deployment
+  name: stock-worker-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      component: stock
+      component: stock-worker
   template:
     metadata:
       labels:
-        component: stock
+        component: stock-worker
     spec:
       containers:
-        - name: stock
-          image: stock:latest
+        - name: stock-worker
+          image: gcr.io/wdmproject23-v2/stock-worker
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: "2Gi"
+              memory: "1Gi"
               cpu: "1"
           command: ["gunicorn"]
-          args: ["-b", "0.0.0.0:5000", "--chdir", "/stock", "app:app"]
+          args: ["-b", "0.0.0.0:5000", "--chdir", "/src", "app:app"]
           ports:
             - containerPort: 5000
           env:
