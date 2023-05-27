@@ -14,7 +14,7 @@ connector = KafkaConnector(bootstrap_servers, '', 'stock-rest')
 app = Flask("stock-rest-service")
 
 
-@app.post('/item/create/<price>')
+@app.get('/item/create/<price>')
 async def create_item(price: float):
     destination = f'stock-{uuid4}'
 

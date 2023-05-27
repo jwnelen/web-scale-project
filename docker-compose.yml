@@ -2,25 +2,37 @@ version: "3"
 services:
 
   order-rest-service:
-    build: ./order-rest
+    build:
+      context: ./
+      dockerfile: ./order-rest/Dockerfile
     image: order-rest:latest
 
   order-worker-service:
-    build: ./order-worker
+    build:
+      context: ./
+      dockerfile: ./order-worker/Dockerfile
     image: order-worker:latest
 
   stock-rest-service:
-    build: ./stock-rest
+    build:
+      context: ./
+      dockerfile: ./stock-rest/Dockerfile
     image: stock-rest:latest
 
   stock-worker-service:
-    build: ./stock-worker
-    image: order-worker:latest
+    build:
+      context: ./
+      dockerfile: ./stock-worker/Dockerfile
+    image: stock-worker:latest
 
   payment-rest-service:
-    build: ./payment-rest
+    build:
+      context: ./
+      dockerfile: ./payment-rest/Dockerfile
     image: payment-rest:latest
 
   payment-worker-service:
-    build: ./payment-worker
+    build:
+      context: ./
+      dockerfile: ./payment-worker/Dockerfile
     image: payment-worker:latest
