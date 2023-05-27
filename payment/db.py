@@ -4,8 +4,8 @@ from uuid import uuid4
 
 class UserDatabase:
     def __init__(self):
-        instance_id = "spanner-db.py"
-        database_id = "order-db.py"
+        instance_id = "spanner-db"
+        database_id = "order-db"
 
         # Instantiate a client.
         spanner_client = spanner.Client()
