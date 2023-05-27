@@ -41,7 +41,7 @@ def create_order(user_id):
     # user_data = connector.payment_find_user(user_id)
 
     r = spanner_db.create_order(user_id)
-    if r["error"]:
+    if "error" in r:
         return {"error": r["error"]}, 400
     return r, 200
 
