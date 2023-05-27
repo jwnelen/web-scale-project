@@ -43,3 +43,27 @@ class StockDatabase:
                 "price": result[1],
                 "amount": result[2]
             }
+
+    def add_stock(self, item_id, amount):
+        def update_stock(transaction):
+            row_ct = transaction.execute_update(
+                "UPDATE stock "
+                f"SET amount = amount + {amount} "
+                f"WHERE (item_id) = '{item_id}'"
+            )
+
+            return {"amount_rows_affected": row_ct}
+
+        return self.database.run_in_transaction(update_stock)
+
+    def remove_stock(self, item_id, amount):
+        def update_stock(transaction):
+            row_ct = transaction.execute_update(
+                "UPDATE stock "
+                f"SET amount = amount - {amount} "
+                f"WHERE (item_id) = '{item_id}'"
+            )
+
+            return {"amount_rows_affected": row_ct}
+
+        return self.database.run_in_transaction(update_stock)
