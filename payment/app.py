@@ -38,12 +38,11 @@ pool = BlockingConnectionPool(
     timeout=10
 )
 
-
 # connector = Eventbus_Connector(bootstrap_servers)
-#connector = DockerConnector(gateway_url)
+connector = DockerConnector(gateway_url)
 
 
- connector = K8sConnector()
+# connector = K8sConnector()
 
 
 def consume_messages():
@@ -77,11 +76,6 @@ def after_request(response):
 
 
 @app.post('/create_user')
-def response_create_user():
-    data = create_user()
-    return make_response(jsonify(data), 200)
-
-
 def create_user():
     r = spanner_db.create_user()
 
@@ -90,6 +84,7 @@ def create_user():
     return r, 200
 
 
+@app.get('/find_user/<user_id>')
 def find_user(user_id: str):
     r = spanner_db.find_user(user_id)
 
@@ -104,7 +99,6 @@ def add_credit(user_id: str, amount: int):
     return r, 200
 
 
-# What is this doing anyway??
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def response_remove_credit(user_id: str, order_id: str, amount: float):
     succeeded = remove_credit(user_id, order_id, amount)

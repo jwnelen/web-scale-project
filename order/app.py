@@ -34,9 +34,6 @@ pool = BlockingConnectionPool(
 )
 
 # connector = Eventbus_Connector(bootstrap_servers)
-#connector = DockerConnector(gateway_url)
-connector = K8sConnector()
-
 connector = DockerConnector(gateway_url)
 
 
@@ -173,6 +170,7 @@ def find_order(order_id):
         return res, 200
 
     return {}, 400
+
 
 def checkout(order_id):
     order = g.db.hgetall(f'order_id:{order_id}')

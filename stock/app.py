@@ -36,12 +36,11 @@ pool = BlockingConnectionPool(
     timeout=10
 )
 
-
 # connector = Eventbus_Connector(bootstrap_servers)
-#connector = DockerConnector(gateway_url)
+connector = DockerConnector(gateway_url)
 
 
- connector = K8sConnector()
+# connector = K8sConnector()
 
 
 def consume_messages():
