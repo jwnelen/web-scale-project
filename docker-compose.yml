@@ -42,9 +42,16 @@ services:
     image: stock:latest
     environment:
       - GATEWAY_URL=http://gateway:80
+      - GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/keyfile.json
+      - GCLOUD_PROJECT=wdmproject23-v2
     command: gunicorn -b 0.0.0.0:5000 --chdir /stock app:app -w 1 --access-logfile - --error-logfile - --log-level debug --timeout 10
     env_file:
       - env/stock_redis.env
+    volumes:
+      # Inject your specific service account keyfile into the container at runtime.
+      # You first run 'gcloud auth application-default login'
+      # Then export this variable in your shell to your service account keyfile path
+      - ${GCP_KEY_PATH}:/tmp/keys/keyfile.json:ro
 
   stock-db:
     image: redis:latest

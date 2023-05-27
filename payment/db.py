@@ -1,14 +1,11 @@
-from google.api_core.exceptions import FailedPrecondition
 from google.cloud import spanner
 from uuid import uuid4
-
-from google.cloud.spanner_v1 import param_types
 
 
 class UserDatabase:
     def __init__(self):
-        instance_id = "spanner-db"
-        database_id = "order-db"
+        instance_id = "spanner-db.py"
+        database_id = "order-db.py"
 
         # Instantiate a client.
         spanner_client = spanner.Client()

@@ -61,6 +61,7 @@ def add_credit(user_id: str, amount: int):
     return r, 200
 
 
+# What is this doing anyway??
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def remove_credit(user_id: str, order_id: str, amount: int):
     amount = int(amount)

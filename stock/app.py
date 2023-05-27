@@ -3,12 +3,14 @@ import atexit
 from flask import Flask, make_response, jsonify
 import redis
 import uuid
-
+from db import StockDatabase
 from backend.docker_connector import DockerConnector
 from backend.k8s_connector import K8sConnector
 
 app = Flask("stock-service")
 gateway_url = ""
+
+spanner_db = StockDatabase()
 
 if 'GATEWAY_URL' in os.environ:
     gateway_url = os.environ['GATEWAY_URL']
@@ -19,7 +21,9 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               db=int(os.environ['REDIS_DB']))
 
 connector = DockerConnector(gateway_url)
-#connector = K8sConnector()
+
+
+# connector = K8sConnector()
 
 
 def close_db_connection():
@@ -36,24 +40,19 @@ def hello():
 
 @app.post('/item/create/<price>')
 def create_item(price: int):
-    with db.pipeline() as pipe:
-        item_id = uuid.uuid4()
-        pipe.hset(f'item_id:{item_id}', 'price', round(float(price)))
-        pipe.hset(f'item_id:{item_id}', 'stock', 0)
-        pipe.execute()
-    data = {'item_id': item_id}
-    return make_response(jsonify(data), 200)
+    r = spanner_db.create_item(price)
+    if "error" in r:
+        return {"error": r["error"]}, 400
+    return r, 200
 
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
-    item = db.hgetall(f'item_id:{item_id}')
-    if item is None:
-        return make_response(jsonify({}), 400)
-    items = {}
-    for k, v in item.items():
-        items[k.decode('utf-8')] = round(float(v.decode('utf-8')))
-    return make_response(jsonify(items), 200)
+    r = spanner_db.find_item(item_id)
+
+    if "error" in r:
+        return {"error": r["error"]}, 400
+    return r, 200
 
 
 @app.post('/add/<item_id>/<amount>')
