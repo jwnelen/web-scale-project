@@ -4,3 +4,4 @@ redis==4.5.4
 python-dotenv==1.0.0
 requests
 google-cloud-spanner==3.35.0
+kafka-python

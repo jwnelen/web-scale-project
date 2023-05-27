@@ -15,6 +15,7 @@ services:
     image: order:latest
     environment:
       - GATEWAY_URL=http://gateway:80
+      - BOOTSTRAP_SERVERS=kafka:9092
       - GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/keyfile.json
       - GCLOUD_PROJECT=wdmproject23-v2
     command: gunicorn -b 0.0.0.0:5000 --chdir /order app:app -w 1 --access-logfile - --error-logfile - --log-level debug --timeout 10
@@ -42,6 +43,7 @@ services:
     image: stock:latest
     environment:
       - GATEWAY_URL=http://gateway:80
+      - BOOTSTRAP_SERVERS=kafka:9092
       - GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/keyfile.json
       - GCLOUD_PROJECT=wdmproject23-v2
     command: gunicorn -b 0.0.0.0:5000 --chdir /stock app:app -w 1 --access-logfile - --error-logfile - --log-level debug --timeout 10
@@ -69,6 +71,7 @@ services:
 
     environment:
       - GATEWAY_URL=http://gateway:80
+      - BOOTSTRAP_SERVERS=kafka:9092
       - GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/keyfile.json
       - GCLOUD_PROJECT=wdmproject23-v2
     command: gunicorn -b 0.0.0.0:5000 --chdir /payment app:app -w 1 --access-logfile - --error-logfile - --log-level debug --timeout 10
@@ -87,3 +90,26 @@ services:
       - REDIS_PORT=7001
     ports:
       - "7001:6379"
+
+  kafka:
+    image: docker.io/bitnami/kafka:3.4
+    ports:
+      - "9092:9092"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@127.0.0.1:9093
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_KRAFT_CLUSTER_ID=1
+      - ALLOW_PLAINTEXT_LISTENER=yes
+
+volumes:
+  kafka_data:
+    driver: local

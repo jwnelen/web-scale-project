@@ -19,7 +19,7 @@ class DockerConnector(Connector):
         return requests.post(f"{self.gateway}/payment/cancel/{user_id}/{order_id}")
 
     def payment_status(self, user_id, order_id):
-        return requests.post(f"{self.gateway}/payment/status/{user_id}/{order_id}")
+        return requests.get(f"{self.gateway}/payment/status/{user_id}/{order_id}").json()
 
     def payment_add_funds(self, user_id, amount):
         return requests.post(f"{self.gateway}/payment/add_funds/{user_id}/{amount}")

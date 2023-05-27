@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: user-service
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     component: user
   ports:
@@ -31,10 +31,7 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: "1Gi"
-              cpu: "1"
-            requests:
-              memory: "1Gi"
+              memory: "2Gi"
               cpu: "1"
           command: ["gunicorn"]
           args: ["-b", "0.0.0.0:5000", "--chdir", "/payment", "app:app"]
@@ -42,7 +39,7 @@ spec:
             - containerPort: 5000
           env:
             - name: REDIS_HOST
-              value: redis-master
+              value: payment-db
             - name: REDIS_PORT
               value: '6379'
             - name: REDIS_PASSWORD
