@@ -2,6 +2,8 @@ from google.api_core.exceptions import FailedPrecondition
 from google.cloud import spanner
 from uuid import uuid4
 
+from google.cloud.spanner_v1 import param_types
+
 
 class UserDatabase:
     def __init__(self):
@@ -43,3 +45,15 @@ class UserDatabase:
             return {
                 "credit": result[1]
             }
+
+    def add_credit_to_user(self, user_id, amount):
+        def update_user(transaction):
+            row_ct = transaction.execute_update(
+                "UPDATE users "
+                f"SET credit = credit + {amount} "
+                f"WHERE (user_id) = '{user_id}'",
+            )
+
+            return {"amount_rows_affected": row_ct}
+
+        return self.database.run_in_transaction(update_user)

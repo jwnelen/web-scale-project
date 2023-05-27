@@ -57,18 +57,8 @@ def find_user(user_id: str):
 
 @app.post('/add_funds/<user_id>/<amount>')
 def add_credit(user_id: str, amount: int):
-    amount = round(float(amount))
-    data = {'done': False}
-    with db.pipeline() as pipe:
-        pipe.exists(f'user_id:{user_id}')
-        exists = pipe.execute()[0]
-        if exists:
-            pipe.hincrby(f"user_id:{user_id}", "credit", amount)
-            pipe.execute()
-            data['done'] = True
-            return make_response(jsonify(data), 200)
-        else:
-            return make_response(jsonify(data), 400)
+    r = spanner_db.add_credit_to_user(user_id, amount)
+    return r, 200
 
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
