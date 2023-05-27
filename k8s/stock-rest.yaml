@@ -37,3 +37,6 @@ spec:
           args: ["-b", "0.0.0.0:5000", "--chdir", "/src", "app:app"]
           ports:
             - containerPort: 5000
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: kafka-broker:9092

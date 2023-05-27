@@ -12,7 +12,7 @@ class KafkaConnector(Connector):
         if not group_id:
             group_id = uuid4()
 
-        self.producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
+        self.producer = KafkaProducer(bootstrap_servers=bootstrap_servers, api_version=(0, 10, 2))
         self.consumer = KafkaConsumer(group_id=group_id, bootstrap_servers=bootstrap_servers)
 
         self.consumer.subscribe(topic)

@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: stock-worker-service
+  annotations:
+    networking.gke.io/load-balancer-type: "Internal"
 spec:
   selector:
     component: stock-worker
@@ -46,3 +48,5 @@ spec:
               value: "redis"
             - name: REDIS_DB
               value: "1"
+            - name: BOOTSTRAP_SERVERS
+              value: kafka-broker:9092
