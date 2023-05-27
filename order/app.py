@@ -7,9 +7,11 @@ import redis
 from flask import Flask, make_response, jsonify
 from backend.docker_connector import DockerConnector
 from backend.k8s_connector import K8sConnector
+from db import OrderDatabase
 
 app = Flask("order-service")
 gateway_url = ""
+spanner_db = OrderDatabase()
 
 if 'GATEWAY_URL' in os.environ:
     gateway_url = os.environ['GATEWAY_URL']
@@ -20,23 +22,17 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               db=int(os.environ['REDIS_DB']))
 
 connector = DockerConnector(gateway_url)
-#connector = K8sConnector()
+
+
+# connector = K8sConnector()
 
 
 def close_db_connection():
     db.close()
 
 
-atexit.register(close_db_connection)
-
-
 def status_code_is_success(status_code: int) -> bool:
     return 200 <= status_code < 300
-
-
-@app.route("/")
-def hello():
-    return "Hello World!"
 
 
 @app.post('/create/<user_id>')
@@ -44,20 +40,11 @@ def create_order(user_id):
     user_data = connector.payment_find_user(user_id)
 
     if not user_data:
-        return make_response(jsonify({}), 400)
+        return make_response(jsonify({"message": "user not found"}), 400)
 
-    with db.pipeline() as pipe:
-        order_id = str(uuid.uuid4())
-        pipe.hset(f'order_id:{order_id}', 'user_id', user_id)
-        pipe.hset(f'order_id:{order_id}', 'paid', 0)
-        pipe.hset(f'order_id:{order_id}', 'items', "")
-        pipe.hset(f'order_id:{order_id}', 'total_cost', 0)
-        pipe.execute()
+    r = spanner_db.create_order(user_id)
 
-    data = {"order_id": order_id}
-
-    return make_response(jsonify(data), 200)
-
+    return r, 200
 
 @app.delete('/remove/<order_id>')
 def remove_order(order_id):
@@ -88,19 +75,11 @@ def remove_item(order_id, item_id):
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
-    query_result = db.hgetall(f'order_id:{order_id}')
+    res = spanner_db.find_order(order_id)
+    if res:
+        return res, 200
 
-    if not query_result:
-        return make_response(jsonify({}), 400)
-
-    result = {}
-    result['order_id'] = order_id
-    result['user_id'] = query_result[b'user_id'].decode("utf-8")
-    result['paid'] = query_result[b'paid'].decode("utf-8")
-    result['items'] = query_result[b'items'].decode("utf-8")
-    result['total_cost'] = query_result[b'total_cost'].decode("utf-8")
-
-    return make_response(jsonify(result), 200)
+    return {}, 400
 
 
 @app.post('/checkout/<order_id>')
