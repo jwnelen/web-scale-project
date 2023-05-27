@@ -44,10 +44,13 @@ class OrderDatabase:
         query = f"SELECT * FROM orders WHERE order_id = '{order_id}'"
 
         with self.database.snapshot() as snapshot:
-            result = snapshot.execute_sql(query)
-            first_res = list(result)[0]
+            result = snapshot.execute_sql(query).one_or_none()
+
+            if result is None:
+                return {"error": "order does not exist"}
+
             return {
-                "order_id": first_res[0],
-                "user_id": first_res[1],
-                "paid": first_res[2]
+                "order_id": result[0],
+                "user_id": result[1],
+                "paid": result[2]
             }
