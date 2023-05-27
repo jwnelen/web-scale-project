@@ -9,17 +9,17 @@ bootstrap_servers = ""
 if 'BOOTSTRAP_SERVERS' in os.environ:
     bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
 
-connector = KafkaConnector(bootstrap_servers, '', 'stock')
+connector = KafkaConnector(bootstrap_servers, '', 'stock-rest')
 
 app = Flask("stock-rest-service")
 
 
 @app.post('/item/create/<price>')
 async def create_item(price: float):
-    dest = f'stock-{uuid4}'
+    destination = f'stock-{uuid4}'
 
     payload = {'data': {'price': float(price)},
-               'destination': dest}
+               'destination': destination}
 
     connector.stock_item_create(payload)
 
@@ -35,8 +35,11 @@ async def create_item(price: float):
             print("Consumer error: {}".format(message.error()))
             continue
 
-        data = message.value
-        waiting = False
+        payload = message.value().decode('utf-8')
+
+        if payload['destination'] == destination:
+            data = payload['data']
+            waiting = False
 
     return make_response(jsonify(data), 200)
 

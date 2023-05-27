@@ -18,7 +18,7 @@ pool = BlockingConnectionPool(
     timeout=10
 )
 
-connector = KafkaConnector(bootstrap_servers, 'stock_workers', 'stock')
+connector = KafkaConnector(bootstrap_servers, 'stock_workers', 'stock-worker')
 
 
 def open_connection():
@@ -26,7 +26,6 @@ def open_connection():
 
 
 async def create_item(payload):
-
     data = payload['data']
     destination = payload['destination']
 
@@ -45,9 +44,9 @@ async def create_item(payload):
     data = {'item_id': item_id}
 
     response = {'data': data,
-               'destination': destination}
+                'destination': destination}
 
-    connector.deliver_response(response)
+    connector.deliver_response('stock-rest', response)
 
 
 def process_message(message):

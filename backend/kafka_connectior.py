@@ -24,59 +24,101 @@ class KafkaConnector(Connector):
         self.consumer.subscribe([topic])
 
     def payment_create_user(self, payload):
-        pass
+        payload['message_type'] = "create_user"
+
+        self.producer.produce('payment-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def payment_find_user(self, payload):
-        pass
+        payload['message_type'] = "find_user"
+
+        self.producer.produce('payment-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def payment_pay(self, payload):
-        pass
+        payload['message_type'] = "pay"
+
+        self.producer.produce('payment-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def payment_cancel(self, payload):
-        pass
+        payload['message_type'] = "cancel"
+
+        self.producer.produce('payment-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def payment_status(self, payload):
-        pass
+        payload['message_type'] = "status"
+
+        self.producer.produce('payment-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def payment_add_funds(self, payload):
-        pass
+        payload['message_type'] = "add_funds"
+
+        self.producer.produce('payment-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def stock_find(self, payload):
-        pass
+        payload['message_type'] = "find"
+
+        self.producer.produce('stock-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def stock_add(self, payload):
-        pass
+        payload['message_type'] = "add"
+
+        self.producer.produce('stock-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def stock_subtract(self, payload):
-        pass
+        payload['message_type'] = "subtract"
+
+        self.producer.produce('stock-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def stock_item_create(self, payload):
         payload['message_type'] = "item_create"
 
-        self.producer.produce('stock', payload.encode('utf-8'))
+        self.producer.produce('stock-worker', payload.encode('utf-8'))
         self.producer.flush()
 
     def order_create_user(self, payload):
-        pass
+        payload['message_type'] = "create_user"
+
+        self.producer.produce('order-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def order_remove(self, payload):
-        pass
+        payload['message_type'] = "remove"
+
+        self.producer.produce('order-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def order_addItem(self, payload):
-        pass
+        payload['message_type'] = "addItem"
+
+        self.producer.produce('order-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def order_removeItem(self, payload):
-        pass
+        payload['message_type'] = "removeItem"
+
+        self.producer.produce('order-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def order_find(self, payload):
-        pass
+        payload['message_type'] = "find"
+
+        self.producer.produce('order-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
     def order_checkout(self, payload):
-        pass
+        payload['message_type'] = "checkout"
 
-    def deliver_response(self, payload):
-        dest = payload['dest']
-        data = payload['data']
+        self.producer.produce('order-worker', payload.encode('utf-8'))
+        self.producer.flush()
 
-        self.producer.send(dest, value=data)
+    def deliver_response(self, topic, payload):
+        self.producer.produce(topic, payload.encode('utf-8'))
         self.producer.flush()
