@@ -37,23 +37,21 @@ def status_code_is_success(status_code: int) -> bool:
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
-    user_data = connector.payment_find_user(user_id)
-
-    if not user_data:
-        return make_response(jsonify({"message": "user not found"}), 400)
+    # This is not needed anymore, because the constaints will take care of this
+    # user_data = connector.payment_find_user(user_id)
 
     r = spanner_db.create_order(user_id)
-
+    if r["error"]:
+        return {"error": r["error"]}, 400
     return r, 200
+
 
 @app.delete('/remove/<order_id>')
 def remove_order(order_id):
-    result = db.hdel(f"order_id:{order_id}", "user_id")
-
-    if not result:
-        return make_response(jsonify({}), 400)
-
-    return make_response(jsonify({}), 200)
+    r = spanner_db.remove_order(order_id)
+    if r:
+        return {"r": r}, 200
+    return {}, 400
 
 
 @app.post('/addItem/<order_id>/<item_id>')

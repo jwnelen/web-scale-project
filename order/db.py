@@ -1,3 +1,4 @@
+from google.api_core.exceptions import FailedPrecondition
 from google.cloud import spanner
 from uuid import uuid4
 
@@ -17,14 +18,27 @@ class OrderDatabase:
     def create_order(self, user_id):
         u_id = str(uuid4())
 
-        with self.database.batch() as batch:
-            batch.insert(
-                table="orders",
-                columns=("order_id", "user_id", "paid"),
-                values=[(u_id, user_id, False)],
-            )
+        try:
+            with self.database.batch() as batch:
+                batch.insert(
+                    table="orders",
+                    columns=("order_id", "user_id", "paid"),
+                    values=[(u_id, user_id, False)],
+                )
+
+        # handle error when user_id does not exist
+        except FailedPrecondition:
+            return {"error": "user_id does not exist"}
+        except Exception as e:
+            return {"error": str(e)}
 
         return {"order_id": u_id}
+
+    def remove_order(self, order_id):
+        with self.database.batch() as batch:
+            res = batch.delete(table="orders", keyset={"order_id": order_id})
+
+        return res
 
     def find_order(self, order_id):
         query = f"SELECT * FROM orders WHERE order_id = '{order_id}'"
