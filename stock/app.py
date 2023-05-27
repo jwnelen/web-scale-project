@@ -83,14 +83,6 @@ def create_item(price: int):
 
 
 @app.get('/find/<item_id>')
-def response_find_item(item_id: str):
-    data = find_item(item_id)
-    if not data:
-        return make_response(jsonify({}), 400)
-
-    return make_response(jsonify(data), 200)
-
-
 def find_item(item_id: str):
     r = spanner_db.find_item(item_id)
 
@@ -100,14 +92,6 @@ def find_item(item_id: str):
 
 
 @app.post('/add/<item_id>/<amount>')
-def response_add_stock(item_id: str, amount: int):
-    succeeded = add_stock(item_id, amount)
-    if succeeded:
-        return make_response(jsonify({}), 200)
-    else:
-        return make_response(jsonify({}), 400)
-
-
 def add_stock(item_id: str, amount: int):
     r = spanner_db.add_stock(item_id, amount)
 
@@ -117,14 +101,6 @@ def add_stock(item_id: str, amount: int):
 
 
 @app.post('/subtract/<item_id>/<amount>')
-def response_remove_stock(item_id: str, amount: int):
-    data = remove_stock(item_id, amount)
-    if not data:
-        return make_response(jsonify({}), 400)
-
-    return make_response(jsonify(data), 200)
-
-
 def remove_stock(item_id: str, amount: int):
     r = spanner_db.remove_stock(item_id, amount)
 

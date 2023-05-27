@@ -70,14 +70,6 @@ def after_request(response):
 
 
 @app.post('/create/<user_id>')
-def response_create_order(user_id):
-    data = create_order(user_id)
-    if not data:
-        return make_response(jsonify({}), 400)
-
-    return make_response(jsonify(data), 200)
-
-
 def create_order(user_id):
     # This is not needed anymore, because the constaints will take care of this
     # user_data = connector.payment_find_user(user_id)
@@ -96,13 +88,6 @@ def remove_order(order_id):
     if r:
         return {"r": r}, 200
     return {}, 400
-
-
-def remove_order(order_id):
-    result = g.db.hdel(f"order_id:{order_id}", "user_id")
-    if not result:
-        return False
-    return True
 
 
 @app.post('/addItem/<order_id>/<item_id>')
@@ -155,15 +140,6 @@ def remove_item(order_id, item_id):
 
 
 @app.get('/find/<order_id>')
-def response_find_order(order_id):
-    data = find_order(order_id)
-
-    if not data:
-        return make_response(jsonify({}), 400)
-
-    return make_response(jsonify(data), 200)
-
-
 def find_order(order_id):
     res = spanner_db.find_order(order_id)
     if res:
