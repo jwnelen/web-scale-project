@@ -1,0 +1,26 @@
+version: "3"
+services:
+
+  order-rest-service:
+    build: ./order-rest
+    image: order-rest:latest
+
+  order-worker-service:
+    build: ./order-worker
+    image: order-worker:latest
+
+  stock-rest-service:
+    build: ./stock-rest
+    image: stock-rest:latest
+
+  stock-worker-service:
+    build: ./stock-worker
+    image: order-worker:latest
+
+  payment-rest-service:
+    build: ./payment-rest
+    image: payment-rest:latest
+
+  payment-worker-service:
+    build: ./payment-worker
+    image: payment-worker:latest

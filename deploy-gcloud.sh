@@ -13,33 +13,42 @@ kubectl config use-context gke_wdmproject23-v2_europe-west4_app-cluster
 
 docker-compose build
 
-docker tag order gcr.io/wdmproject23-v2/order:latest
-docker push gcr.io/wdmproject23-v2/order:latest
+docker tag order-rest gcr.io/wdmproject23-v2/order-rest:latest
+docker push gcr.io/wdmproject23-v2/order-rest:latest
 
-docker tag stock gcr.io/wdmproject23-v2/stock:latest
-docker push gcr.io/wdmproject23-v2/stock:latest
+docker tag order-worker gcr.io/wdmproject23-v2/order-worker:latest
+docker push gcr.io/wdmproject23-v2/order-worker:latest
 
-docker tag user gcr.io/wdmproject23-v2/user:latest
-docker push gcr.io/wdmproject23-v2/user:latest
+docker tag stock-rest gcr.io/wdmproject23-v2/stock-rest:latest
+docker push gcr.io/wdmproject23-v2/stock-rest:latest
 
-#helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-#
-#helm repo update
-#
-#helm install -f helm-config/nginx-helm-values.yaml nginx ingress-nginx/ingress-nginx
+docker tag stock-worker gcr.io/wdmproject23-v2/stock-worker:latest
+docker push gcr.io/wdmproject23-v2/stock-worker:latest
 
-cd k8s-gcloud
+docker tag payment-rest gcr.io/wdmproject23-v2/payment-rest:latest
+docker push gcr.io/wdmproject23-v2/payment-rest:latest
+
+docker tag payment-worker gcr.io/wdmproject23-v2/payment-worker:latest
+docker push gcr.io/wdmproject23-v2/payment-worker:latest
+
+
+cd k8s
 kubectl apply -f order-db.yaml
 kubectl apply -f stock-db.yaml
-kubectl apply -f user-db.yaml
+kubectl apply -f payment-db.yaml
 
 sleep 10
 
-kubectl apply -f order-app.yaml
-kubectl apply -f stock-app.yaml
-kubectl apply -f user-app.yaml
+kubectl apply -f order-rest.yaml
+kubectl apply -f stock-rest.yaml
+kubectl apply -f payment-rest.yaml
 
-sleep 20
-kubectl apply -f ingress-service.yaml
+sleep 10
+
+kubectl apply -f order-worker.yaml
+kubectl apply -f stock-worker.yaml
+kubectl apply -f payment-worker.yaml
+
+sleep 10
 
 gcloud compute forwarding-rules list

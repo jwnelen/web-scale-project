@@ -2,11 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /home/app/
 
-COPY ./order-rest/requirements.txt .
+COPY ./payment-worker/requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY ./order-rest /src
+COPY ./payment-worker /src
 COPY ./backend /src/backend
 
 EXPOSE 5000
