@@ -41,6 +41,7 @@ def create_order(user_id):
     # user_data = connector.payment_find_user(user_id)
 
     r = spanner_db.create_order(user_id)
+
     if "error" in r:
         return {"error": r["error"]}, 400
     return r, 200
@@ -49,6 +50,7 @@ def create_order(user_id):
 @app.delete('/remove/<order_id>')
 def remove_order(order_id):
     r = spanner_db.remove_order(order_id)
+
     if r:
         return {"r": r}, 200
     return {}, 400

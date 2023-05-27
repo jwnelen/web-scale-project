@@ -1,8 +1,7 @@
 import os
 import atexit
-from flask import Flask, make_response, jsonify
+from flask import Flask
 import redis
-import uuid
 from db import StockDatabase
 from backend.docker_connector import DockerConnector
 from backend.k8s_connector import K8sConnector
@@ -33,14 +32,10 @@ def close_db_connection():
 atexit.register(close_db_connection)
 
 
-@app.route("/")
-def hello():
-    return "Hello World!"
-
-
 @app.post('/item/create/<price>')
 def create_item(price: int):
     r = spanner_db.create_item(price)
+
     if "error" in r:
         return {"error": r["error"]}, 400
     return r, 200
@@ -58,6 +53,7 @@ def find_item(item_id: str):
 @app.post('/add/<item_id>/<amount>')
 def add_stock(item_id: str, amount: int):
     r = spanner_db.add_stock(item_id, amount)
+
     if "error" in r:
         return {"error": r["error"]}, 400
     return r, 200

@@ -41,6 +41,7 @@ def hello():
 @app.post('/create_user')
 def create_user():
     r = spanner_db.create_user()
+
     if "error" in r:
         return {"error": r["error"]}, 400
     return r, 200
