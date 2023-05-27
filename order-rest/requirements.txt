@@ -3,5 +3,5 @@ Flask[async]
 gunicorn==20.1.0
 python-dotenv==1.0.0
 requests
-confluent-kafka
+kafka-python
 redis

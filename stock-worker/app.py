@@ -59,15 +59,14 @@ def process_message(message):
 
 def main():
     while True:
-        message = connector.consumer.poll(1.0)
+        for message in connector.consumer:
+            if message is None:
+                continue
+            if message.error():
+                print("Consumer error: {}".format(message.error()))
+                continue
 
-        if message is None:
-            continue
-        if message.error():
-            print("Consumer error: {}".format(message.error()))
-            continue
-
-        process_message(message)
+            process_message(message)
 
 
 if __name__ == "__main__":

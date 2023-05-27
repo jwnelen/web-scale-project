@@ -27,19 +27,18 @@ async def create_item(price: float):
     waiting = True
 
     while waiting:
-        message = await connector.consumer.poll(1.0)
+        try:
+            for message in connector.consumer:
+                payload = message.value().decode('utf-8')
 
-        if message is None:
-            continue
-        if message.error():
-            print("Consumer error: {}".format(message.error()))
-            continue
+                if payload['destination'] == destination:
+                    data = payload['data']
+                    waiting = False
+                    break
 
-        payload = message.value().decode('utf-8')
-
-        if payload['destination'] == destination:
-            data = payload['data']
-            waiting = False
+        except Exception as e:
+            print(e)
+            continue  # Temp solution
 
     return make_response(jsonify(data), 200)
 
