@@ -2,8 +2,7 @@ import os
 import threading
 
 from uuid import uuid4
-from backend.eventbus_connectior import Eventbus_Connector
-from backend.k8s_connector import K8sConnector
+from backend.kafka_connectior import KafkaConnector
 from redis import BlockingConnectionPool
 
 bootstrap_servers = ""
@@ -19,8 +18,7 @@ pool = BlockingConnectionPool(
     timeout=10
 )
 
-# connector = Eventbus_Connector(bootstrap_servers)
-connector = K8sConnector()
+connector = KafkaConnector(bootstrap_servers)
 
 
 def consume_messages():
@@ -30,7 +28,7 @@ def consume_messages():
             pass
 
 
-if isinstance(connector, Eventbus_Connector):
+if isinstance(connector, KafkaConnector):
     connector.consumer.subscribe('orders')
 
     consume_thread = threading.Thread(target=consume_messages)

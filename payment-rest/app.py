@@ -2,16 +2,14 @@ import os
 import threading
 
 from flask import Flask, jsonify, make_response
-from backend.eventbus_connectior import Eventbus_Connector
-from backend.k8s_connector import K8sConnector
+from backend.kafka_connectior import KafkaConnector
 
 bootstrap_servers = ""
 
 if 'BOOTSTRAP_SERVERS' in os.environ:
     bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
 
-# connector = Eventbus_Connector(bootstrap_servers)
-connector = K8sConnector()
+connector = KafkaConnector(bootstrap_servers)
 
 
 def consume_messages():
@@ -21,7 +19,7 @@ def consume_messages():
             pass
 
 
-if isinstance(connector, Eventbus_Connector):
+if isinstance(connector, KafkaConnector):
     connector.consumer.subscribe('orders')
 
     consume_thread = threading.Thread(target=consume_messages)

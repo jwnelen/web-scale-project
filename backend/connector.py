@@ -6,65 +6,65 @@ class Connector(ABC):
         self.type = "Abstract Connector Class"
 
     @abstractmethod
-    def payment_find_user(self, user_id):
+    def payment_find_user(self, payload):
         pass
 
     @abstractmethod
-    def payment_create_user(self):
+    def payment_create_user(self, payload):
         pass
 
     @abstractmethod
-    def payment_pay(self, user_id, order_id, amount):
+    def payment_pay(self, payload):
         pass
 
     @abstractmethod
-    def payment_cancel(self, user_id, order_id):
+    def payment_cancel(self, payload):
         pass
 
     @abstractmethod
-    def payment_status(self, user_id, order_id):
+    def payment_status(self, payload):
         pass
 
     @abstractmethod
-    def payment_add_funds(self, user_id, amount):
+    def payment_add_funds(self, payload):
         pass
 
     @abstractmethod
-    def stock_item_create(self, price):
+    def stock_item_create(self, payload):
         pass
 
     @abstractmethod
-    def stock_find(self, item_id):
+    def stock_find(self, payload):
         pass
 
     @abstractmethod
-    def stock_add(self, item_id, amount):
+    def stock_add(self, payload):
         pass
 
     @abstractmethod
-    def stock_subtract(self, item_id, amount):
+    def stock_subtract(self, payload):
         pass
 
     @abstractmethod
-    def order_create_user(self):
+    def order_create_user(self, payload):
         pass
 
     @abstractmethod
-    def order_remove(self, order_id):
+    def order_remove(self, payload):
         pass
 
     @abstractmethod
-    def order_addItem(self, order_id, item_id):
+    def order_addItem(self, payload):
         pass
 
     @abstractmethod
-    def order_removeItem(self, order_id, item_id):
+    def order_removeItem(self, payload):
         pass
 
     @abstractmethod
-    def order_find(self, order_id):
+    def order_find(self, payload):
         pass
 
     @abstractmethod
-    def order_checkout(self, order_id):
+    def order_checkout(self, payload):
         pass

@@ -15,4 +15,3 @@ docker push gcr.io/wdmproject23-v2/locust:latest
 cd ../k8s
 
 kubectl apply -f .
-
