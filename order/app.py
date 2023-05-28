@@ -92,51 +92,28 @@ def remove_order(order_id):
 
 @app.post('/addItem/<order_id>/<item_id>')
 def response_add_item(order_id, item_id):
-    data = add_item(order_id, item_id)
-
-    if not data:
-        return make_response(jsonify({}), 404)
-
-    return make_response(jsonify(data), 200)
-
-
-def add_item(order_id, item_id):
-    # Check the price of the item
     result = connector.stock_find(item_id)
+    if not result:
+        return {"error": "Could not find item"}, 404
 
-    if result is None:
-        return {}
+    data = spanner_db.add_item_to_order(order_id, item_id, result['price'])
+    if "error" in data:
+        return {"error": data["error"]}, 400
 
-    with g.db.pipeline(transaction=True) as pipe:
-        # Get information
-        order_items = g.db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
-        total_cost = g.db.hget(f'order_id:{order_id}', 'total_cost').decode("utf-8")
-
-        order_items += str(item_id) + ","
-        total_cost = float(total_cost) + float(result['price'])
-
-        # Update information
-        pipe.hset(f'order_id:{order_id}', 'items', order_items)
-        pipe.hset(f'order_id:{order_id}', 'total_cost', total_cost)
-        pipe.execute()
-
-    data = {"new_total_cost": total_cost}
-
-    return data
+    return data, 200
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')
 def response_remove_item(order_id, item_id):
-    data = remove_item(order_id, item_id)
-    return make_response(jsonify(data), 200)
+    result = connector.stock_find(item_id)
+    if not result:
+        return {"error": "Could not find item"}, 404
 
+    data = spanner_db.remove_item_from_order(order_id, item_id, result['price'])
+    if "error" in data:
+        return {"error": data["error"]}, 400
 
-def remove_item(order_id, item_id):
-    order_items = g.db.hget(f'order_id:{order_id}', 'items').decode("utf-8")
-    order_items = str.replace(order_items, str(item_id) + ",", "")
-    g.db.hset(f'order_id:{order_id}', 'items', order_items)
-    data = {}
-    return data
+    return data, 200
 
 
 @app.get('/find/<order_id>')

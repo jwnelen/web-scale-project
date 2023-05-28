@@ -54,3 +54,62 @@ class OrderDatabase:
                 "user_id": result[1],
                 "paid": result[2]
             }
+
+    def add_item_to_order(self, order_id, item_id, price):
+        # Check if the order-item pair already exists
+
+        def adding(transaction):
+            finding_query = f"SELECT * FROM order_items WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
+            order_item_combo = transaction.execute_sql(finding_query).one_or_none()
+            # Does not exist
+            if order_item_combo is None:
+                res = transaction.execute_sql(
+                    f"INSERT INTO order_items (order_id, item_id, quantity, total_price) "
+                    f"VALUES ('{order_id}', '{item_id}', 1, {price})"
+                    f"RETURNING order_id, item_id, quantity, total_price"
+                ).one()
+                return {"order_id": res[0], "item_id": res[1], "quantity": res[2], "price": res[3]}
+
+            # Update the current value
+            res = transaction.execute_sql(
+                f"UPDATE order_items SET quantity = quantity + 1, "
+                f"total_price = total_price + {price} "
+                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
+                f"RETURNING order_id, item_id, quantity, total_price"
+            ).one_or_none()
+
+            return {"order_id": res[0], "item_id": res[1], "quantity": res[2], "price": res[3]}
+
+        return self.database.run_in_transaction(adding)
+
+    def remove_item_from_order(self, order_id, item_id, price):
+        def adding(transaction):
+            finding_query = f"SELECT * FROM order_items WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
+            order_item_combo = transaction.execute_sql(finding_query).one_or_none()
+            # Does not exists
+            if order_item_combo is None:
+                return {"error": "order_id and item_id does not exist"}
+
+            # Only one item left, delete the row
+            if order_item_combo[2] == 1:
+                res = transaction.execute_sql(
+                    f"DELETE FROM order_items WHERE order_id = '{order_id}' AND item_id = '{item_id}' "
+                    f"RETURNING order_id, item_id"
+                ).one_or_none()
+
+                if res is None:
+                    return {"error": "order_id and item_id does not exist"}           
+                     
+                return {"order_id": order_id, "item_id": item_id, "price": 0, "quantity": 0}
+
+            # Update the current value
+            res = transaction.execute_sql(
+                f"UPDATE order_items SET quantity = quantity - 1, "
+                f"total_price = total_price - {price} "
+                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
+                f"RETURNING order_id, item_id, quantity, total_price"
+            ).one_or_none()
+
+            return {"order_id": res[0], "item_id": res[1], "quantity": res[2], "price": res[3]}
+
+        return self.database.run_in_transaction(adding)
