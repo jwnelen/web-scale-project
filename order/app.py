@@ -98,29 +98,10 @@ def find_order(order_id):
     return result, 200
 
 
+@app.post('/checkout/<order_id>')
 def checkout(order_id):
-    pass
-    # order = g.db.hgetall(f'order_id:{order_id}')
-    # items = order[b'items'].decode("utf-8")
-    #
-    # total_cost = 0.0
-    # for item in items.split(","):
-    #     if item == '':
-    #         continue
-    #     result = connector.stock_find(item)
-    #
-    #     if result is not None:
-    #         total_cost += float(result['price'])
-    #
-    # payment = connector.payment_pay(order[b'user_id'].decode('utf-8'), order_id, total_cost)
-    #
-    # if payment.status_code != 200:
-    #     return False
-    # for item in items.split(","):
-    #     if item == '':
-    #         continue
-    #     subtract = connector.stock_subtract(item, 1)
-    #     if subtract.status_code != 200:
-    #         return False
-    #
-    # return True
+    result = spanner_db.pay_order(order_id)
+    if "error" in result:
+        return {"succeeded": False}, 400
+
+    return {"succeeded": True}, 200

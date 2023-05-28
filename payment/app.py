@@ -74,11 +74,12 @@ def add_credit(user_id: str, amount: int):
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
 def response_remove_credit(user_id: str, order_id: str, amount: float):
-    pass
+    result = spanner_db.remove_credit_from_user(user_id, amount)
 
+    if "error" in result:
+        return result, 400
 
-def remove_credit(user_id: str, order_id: str, amount: float):
-    pass
+    return result, 200
 
 
 @app.post('/cancel/<user_id>/<order_id>')

@@ -57,6 +57,22 @@ class UserDatabase:
 
         return self.database.run_in_transaction(update_user)
 
+    def remove_credit_from_user(self, user_id, amount):
+        def update_credit(transaction):
+            # There is a check in the DB that credit cannot be negative
+            row_ct = transaction.execute_update(
+                "UPDATE users "
+                f"SET credit = credit - {amount} "
+                f"WHERE (user_id) = '{user_id}'",
+            )
+
+            return {"amount_rows_affected": row_ct}
+
+        try:
+            return self.database.run_in_transaction(update_credit)
+        except Exception as e:
+            return {"error": str(e)}
+
     def get_payment_status(self, order_id):
         with self.database.snapshot() as snapshot:
             result = snapshot.execute_sql(
@@ -67,5 +83,5 @@ class UserDatabase:
                 return {"error": "order does not exist"}
 
             return {
-                "paid": result[0]
+                "paid": bool(result[0])
             }

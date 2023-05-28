@@ -152,3 +152,49 @@ class OrderDatabase:
         except Exception as e:
             return {"error": str(e)}
         return res
+
+    def pay_order(self, order_id):
+        def paying(transaction):
+            orderItemsQuery = "SELECT * FROM orderItems"
+
+            query_all_items = f"SELECT * FROM orders AS o " \
+                              f"LEFT JOIN ({orderItemsQuery}) AS oi " \
+                              f"ON o.order_id = oi.order_id " \
+                              f"WHERE o.order_id = '{order_id}'"
+
+            # For a single consistent read, use snapshot
+            # Snapshots do not have an execute update method
+            results: StreamedResultSet = transaction.execute_sql(query_all_items)
+
+            if results is None:
+                return {"error": "order does not exist"}
+
+            result_list = list(results)
+            total_price = sum([float(r[6]) for r in result_list])
+
+            # For each item, remove the items from the stock
+            # There is a check that the item is in stock!!
+            for r in result_list:
+                item_id = r[4]
+                quantity = r[5]
+                transaction.execute_sql(
+                    f"UPDATE items SET stock = stock - {quantity} WHERE item_id = '{item_id}'"
+                )
+
+            # Remove Credits
+            user_id = result_list[0][1]
+            transaction.execute_sql(
+                f"UPDATE users SET credits = credits - {total_price} WHERE user_id = '{user_id}'"
+            )
+
+            # Mark the order as paid
+            transaction.execute_sql(
+                f"UPDATE orders SET paid = TRUE WHERE order_id = '{order_id}'"
+            )
+            return {"order_id": order_id}
+
+        try:
+            res = self.database.run_in_transaction(paying)
+        except Exception as e:
+            return {"error": str(e)}
+        return res
