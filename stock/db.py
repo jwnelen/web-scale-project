@@ -38,10 +38,9 @@ class StockDatabase:
 
             if result is None:
                 return {"error": "item_id does not exist"}
-
             return {
-                "price": result[1],
-                "amount": result[2]
+                "stock": result[2],
+                "price": result[1]
             }
 
     def add_stock(self, item_id, amount):

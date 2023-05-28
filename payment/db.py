@@ -18,14 +18,14 @@ class UserDatabase:
     def create_user(self):
         u_id = str(uuid4())
 
-        try:
-            with self.database.batch() as batch:
-                batch.insert(
-                    table="users",
-                    columns=("user_id", "credit"),
-                    values=[(u_id, 0)],
-                )
+        def trans_create_user(transaction):
+            transaction.execute_update(
+                "INSERT INTO users (user_id, credit) "
+                f"VALUES ('{u_id}', 0) "
+            )
 
+        try:
+            self.database.run_in_transaction(trans_create_user)
         except Exception as e:
             return {"error": str(e)}
 
@@ -41,6 +41,7 @@ class UserDatabase:
                 return {"error": "user_id does not exist"}
 
             return {
+                "user_id": result[0],
                 "credit": result[1]
             }
 
