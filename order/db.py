@@ -1,6 +1,7 @@
+from uuid import uuid4
+
 from google.api_core.exceptions import FailedPrecondition
 from google.cloud import spanner
-from uuid import uuid4
 
 
 class OrderDatabase:
@@ -98,8 +99,8 @@ class OrderDatabase:
                 ).one_or_none()
 
                 if res is None:
-                    return {"error": "order_id and item_id does not exist"}           
-                     
+                    return {"error": "order_id and item_id does not exist"}
+
                 return {"order_id": order_id, "item_id": item_id, "price": 0, "quantity": 0}
 
             # Update the current value

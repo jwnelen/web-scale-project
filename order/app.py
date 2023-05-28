@@ -1,17 +1,15 @@
 import os
-import atexit
 import threading
-import uuid
 
-from flask import Flask, make_response, jsonify, g
+from flask import Flask, g
+
 from backend.docker_connector import DockerConnector
 from backend.eventbus_connectior import Eventbus_Connector
-from backend.k8s_connector import K8sConnector
 from db import OrderDatabase
-from redis import Redis, BlockingConnectionPool
 
 gateway_url = ""
 bootstrap_servers = ""
+
 spanner_db = OrderDatabase()
 
 if 'GATEWAY_URL' in os.environ:
@@ -19,20 +17,6 @@ if 'GATEWAY_URL' in os.environ:
 
 if 'BOOTSTRAP_SERVERS' in os.environ:
     bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
-
-# db: Redis = Redis(host=os.environ['REDIS_HOST'],
-#                   port=int(os.environ['REDIS_PORT']),
-#                   password=os.environ['REDIS_PASSWORD'],
-#                   db=int(os.environ['REDIS_DB']))
-
-pool = BlockingConnectionPool(
-    host=os.environ['REDIS_HOST'],
-    port=int(os.environ['REDIS_PORT']),
-    password=os.environ['REDIS_PASSWORD'],
-    db=int(os.environ['REDIS_DB']),
-    timeout=10
-)
-
 # connector = Eventbus_Connector(bootstrap_servers)
 connector = DockerConnector(gateway_url)
 
@@ -54,19 +38,6 @@ if isinstance(connector, Eventbus_Connector):
     consume_thread.start()
 
 app = Flask("order-service")
-
-
-@app.before_request
-def before_request():
-    db: Redis = Redis(connection_pool=pool)
-    g.db = db
-
-
-@app.after_request
-def after_request(response):
-    if g.db is not None:
-        g.db.close()
-    return response
 
 
 @app.post('/create/<user_id>')
@@ -126,27 +97,28 @@ def find_order(order_id):
 
 
 def checkout(order_id):
-    order = g.db.hgetall(f'order_id:{order_id}')
-    items = order[b'items'].decode("utf-8")
-
-    total_cost = 0.0
-    for item in items.split(","):
-        if item == '':
-            continue
-        result = connector.stock_find(item)
-
-        if result is not None:
-            total_cost += float(result['price'])
-
-    payment = connector.payment_pay(order[b'user_id'].decode('utf-8'), order_id, total_cost)
-
-    if payment.status_code != 200:
-        return False
-    for item in items.split(","):
-        if item == '':
-            continue
-        subtract = connector.stock_subtract(item, 1)
-        if subtract.status_code != 200:
-            return False
-
-    return True
+    pass
+    # order = g.db.hgetall(f'order_id:{order_id}')
+    # items = order[b'items'].decode("utf-8")
+    #
+    # total_cost = 0.0
+    # for item in items.split(","):
+    #     if item == '':
+    #         continue
+    #     result = connector.stock_find(item)
+    #
+    #     if result is not None:
+    #         total_cost += float(result['price'])
+    #
+    # payment = connector.payment_pay(order[b'user_id'].decode('utf-8'), order_id, total_cost)
+    #
+    # if payment.status_code != 200:
+    #     return False
+    # for item in items.split(","):
+    #     if item == '':
+    #         continue
+    #     subtract = connector.stock_subtract(item, 1)
+    #     if subtract.status_code != 200:
+    #         return False
+    #
+    # return True

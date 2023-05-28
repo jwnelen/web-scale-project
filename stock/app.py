@@ -1,16 +1,11 @@
 import os
-import atexit
-from flask import Flask
-import redis
-from db import StockDatabase
 import threading
-import uuid
 
-from flask import Flask, jsonify, make_response, g
+from flask import Flask
+
 from backend.docker_connector import DockerConnector
 from backend.eventbus_connectior import Eventbus_Connector
-from backend.k8s_connector import K8sConnector
-from redis import Redis, BlockingConnectionPool
+from db import StockDatabase
 
 gateway_url = ""
 bootstrap_servers = ""
@@ -22,19 +17,6 @@ if 'GATEWAY_URL' in os.environ:
 
 if 'BOOTSTRAP_SERVERS' in os.environ:
     bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
-
-# db: Redis = Redis(host=os.environ['REDIS_HOST'],
-#                   port=int(os.environ['REDIS_PORT']),
-#                   password=os.environ['REDIS_PASSWORD'],
-#                   db=int(os.environ['REDIS_DB']))
-
-pool = BlockingConnectionPool(
-    host=os.environ['REDIS_HOST'],
-    port=int(os.environ['REDIS_PORT']),
-    password=os.environ['REDIS_PASSWORD'],
-    db=int(os.environ['REDIS_DB']),
-    timeout=10
-)
 
 # connector = Eventbus_Connector(bootstrap_servers)
 connector = DockerConnector(gateway_url)
@@ -58,19 +40,6 @@ if isinstance(connector, Eventbus_Connector):
     consume_thread.start()
 
 app = Flask("stock-service")
-
-
-@app.before_request
-def before_request():
-    db: Redis = Redis(connection_pool=pool)
-    g.db = db
-
-
-@app.after_request
-def after_request(response):
-    if g.db is not None:
-        g.db.close()
-    return response
 
 
 @app.post('/item/create/<price>')

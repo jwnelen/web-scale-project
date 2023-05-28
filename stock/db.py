@@ -1,5 +1,6 @@
-from google.cloud import spanner
 from uuid import uuid4
+
+from google.cloud import spanner
 
 
 class StockDatabase:

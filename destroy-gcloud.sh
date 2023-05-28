@@ -11,4 +11,4 @@ cd k8s-gcloud
 kubectl delete -f .
 
 # # Uncomment to delete cluster
-#gcloud container clusters delete app-cluster --region=europe-west4
+# gcloud container clusters delete app-cluster --region=europe-west4

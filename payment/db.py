@@ -1,5 +1,6 @@
-from google.cloud import spanner
 from uuid import uuid4
+
+from google.cloud import spanner
 
 
 class UserDatabase:
@@ -54,3 +55,16 @@ class UserDatabase:
             return {"amount_rows_affected": row_ct}
 
         return self.database.run_in_transaction(update_user)
+
+    def get_payment_status(self, order_id):
+        with self.database.snapshot() as snapshot:
+            result = snapshot.execute_sql(
+                f"SELECT paid FROM orders WHERE order_id = '{order_id}'"
+            ).one_or_none()
+
+            if result is None:
+                return {"error": "order does not exist"}
+
+            return {
+                "paid": result[0]
+            }
