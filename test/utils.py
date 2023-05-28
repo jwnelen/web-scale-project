@@ -1,6 +1,6 @@
 import requests
 
-env = "GKE"
+env = "Docker"
 
 if env == "Minikube":
     ORDER_URL = STOCK_URL = PAYMENT_URL = "http://127.0.0.1:80"

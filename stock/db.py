@@ -39,8 +39,8 @@ class StockDatabase:
             if result is None:
                 return {"error": "item_id does not exist"}
             return {
-                "stock": result[2],
-                "price": result[1]
+                "stock": int(result[2]),
+                "price": float(result[1])
             }
 
     def add_stock(self, item_id, amount):
@@ -61,6 +61,12 @@ class StockDatabase:
 
     def remove_stock(self, item_id, amount):
         def update_stock(transaction):
+            current_stock = transaction.execute_sql(
+                f"SELECT amount FROM stock WHERE item_id = '{item_id}'"
+            ).one_or_none()
+            if int(amount) > int(current_stock[0]):
+                return {"error": "not enough stock"}
+
             row_ct = transaction.execute_update(
                 "UPDATE stock "
                 f"SET amount = amount - {amount} "

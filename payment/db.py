@@ -42,7 +42,7 @@ class UserDatabase:
 
             return {
                 "user_id": result[0],
-                "credit": result[1]
+                "credit": float(result[1])
             }
 
     def add_credit_to_user(self, user_id, amount):
