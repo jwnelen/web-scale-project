@@ -6,7 +6,7 @@ from google.cloud import spanner
 class UserDatabase:
     def __init__(self):
         instance_id = "spanner-db"
-        database_id = "order-db"
+        database_id = "database"
 
         # Instantiate a client.
         spanner_client = spanner.Client()

@@ -56,20 +56,20 @@ def create_order(user_id):
 def remove_order(order_id):
     r = spanner_db.remove_order(order_id)
 
-    if r:
-        return {"r": r}, 200
-    return {}, 400
+    if "error" in r:
+        return r, 400
+    return r, 200
 
 
 @app.post('/addItem/<order_id>/<item_id>')
 def response_add_item(order_id, item_id):
     result = connector.stock_find(item_id)
-    if not result:
-        return {"error": "Could not find item"}, 404
+    if "error" in result:
+        return {"error": "Could not find item"}, 400
 
     data = spanner_db.add_item_to_order(order_id, item_id, result['price'])
     if "error" in data:
-        return {"error": data["error"]}, 400
+        return data, 400
 
     return data, 200
 
