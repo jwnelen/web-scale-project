@@ -3,7 +3,7 @@
 gcloud config set project wdmproject23-v2
 
 # Uncomment to create cluster
-#gcloud container clusters create-auto app-cluster --region=europe-west4
+gcloud container clusters create-auto app-cluster --region=europe-west4
 
 gcloud container clusters get-credentials app-cluster --region=europe-west4
 
@@ -25,11 +25,11 @@ cd k8s
 
 kubectl apply -f zookeeper.yaml
 
-sleep 10
+sleep 15
 
 kubectl apply -f kafka.yaml
 
-sleep 10
+sleep 20
 
 kubectl apply -f stock-db.yaml
 

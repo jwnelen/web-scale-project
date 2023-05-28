@@ -1,46 +1,44 @@
 import json
 import os
+from asyncio import sleep
 
 from uuid import uuid4
 from flask import Flask, jsonify, make_response
 from backend.kafka_connectior import KafkaConnector
+import logging
+logging.basicConfig(level=logging.INFO)
 
 bootstrap_servers = ""
 
 if 'BOOTSTRAP_SERVERS' in os.environ:
     bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
 
-connector = KafkaConnector(bootstrap_servers, '', 'stock-rest')
+connector = KafkaConnector(bootstrap_servers, 'test2', 'stock-rest')
 
 app = Flask("stock-rest-service")
 
 
-@app.route('/item/create/<price>')
-async def create_item(price: float):
+def retrieve_response(destination):
+    for message in connector.consumer:
+        payload = json.loads(message.value.decode('utf-8'))
+        #print(payload['destination'])
+        #if payload['destination'] == destination:
+        response = payload['data']
+        return response
+
+
+@app.post('/item/create/<price>')
+def create_item(price: float):
     destination = f'stock-{str(uuid4())}'
 
     payload = {'data': {'price': float(price)},
                'destination': destination}
-
+    print(payload)
     connector.stock_item_create(payload)
-    data = {}
-    waiting = True
 
-    while waiting:
-        try:
-            for message in connector.consumer:
-                payload = json.loads(message.value.decode('utf-8'))
-                print(payload['destination'])
-                if payload['destination'] == destination:
-                    data = payload['data']
-                    waiting = False
-                    break
+    response = retrieve_response(destination)
 
-        except Exception as e:
-            print(e)
-            continue  # Temp solution
-
-    return make_response(jsonify(data), 200)
+    return make_response(jsonify(response), 200)
 
 #
 # @app.get('/find/<item_id>')

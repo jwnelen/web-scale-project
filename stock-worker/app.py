@@ -1,39 +1,28 @@
 import json
 import os
+import asyncio
+from time import sleep
 
 from uuid import uuid4
 from redis import Redis, BlockingConnectionPool
 
 from backend.kafka_connectior import KafkaConnector
-
-bootstrap_servers = ""
-
-if 'BOOTSTRAP_SERVERS' in os.environ:
-    bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
-
-pool = BlockingConnectionPool(
-    host=os.environ['REDIS_HOST'],
-    port=int(os.environ['REDIS_PORT']),
-    password=os.environ['REDIS_PASSWORD'],
-    db=int(os.environ['REDIS_DB']),
-    timeout=10
-)
-
-connector = KafkaConnector(bootstrap_servers, 'stock_workers', 'stock-worker')
+import logging
 
 
-def open_connection():
-    return Redis(connection_pool=pool)
+def open_connection(db_pool):
+    return Redis(connection_pool=db_pool)
 
 
-def create_item(payload):
+def create_item(payload, db_pool):
     data = payload['data']
+    print(data)
     destination = payload['destination']
 
     item_id = str(uuid4())
     price = data['price']
 
-    conn = open_connection()
+    conn = open_connection(db_pool)
 
     with conn.pipeline(transaction=True) as pipe:
         pipe.hset(f'item_id:{item_id}', 'price', float(price))
@@ -46,32 +35,49 @@ def create_item(payload):
 
     response = {'data': data,
                 'destination': destination}
-    print("Sending response")
-    connector.deliver_response('stock-rest', response)
-    print("Response sent")
+
+    return response
 
 
-def process_message(message):
+def process_message(message, connector, db_pool):
     payload = json.loads(message.value.decode('utf-8'))
     message_type = payload['message_type']
 
     if message_type == "item_create":
-        create_item(payload)
+        response = create_item(payload, db_pool)
+        connector.deliver_response('stock-rest', response)
+
+
+def consume_messages(connector, db_pool):
+    print("Consuming")
+    for message in connector.consumer:
+        print("Message received")
+        process_message(message, connector, db_pool)
 
 
 def main():
-    while True:
-        for message in connector.consumer:
-            if message is None:
-                continue
+    logging.basicConfig(level=logging.INFO)
+    bootstrap_servers = ""
 
-            print("Message received")
-            process_message(message)
+    if 'BOOTSTRAP_SERVERS' in os.environ:
+        bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
+
+    connector = KafkaConnector(bootstrap_servers, 'test', 'stock-worker')
+
+    db_pool = BlockingConnectionPool(
+        host=os.environ['REDIS_HOST'],
+        port=int(os.environ['REDIS_PORT']),
+        password=os.environ['REDIS_PASSWORD'],
+        db=int(os.environ['REDIS_DB']),
+        timeout=10
+    )
+
+    consume_messages(connector, db_pool)
 
 
 if __name__ == "__main__":
+    # asyncio.run(main())
     main()
-
 #
 # def find_item(item_id: str):
 #     item = g.db.hgetall(f'item_id:{item_id}')

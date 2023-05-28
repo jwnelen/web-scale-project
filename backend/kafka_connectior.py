@@ -17,9 +17,7 @@ class KafkaConnector(Connector):
             group_id = str(uuid4())
 
         self.producer = KafkaProducer(bootstrap_servers=bootstrap_servers, api_version=(0, 10, 2))
-        self.consumer = KafkaConsumer(group_id=group_id, bootstrap_servers=bootstrap_servers, api_version=(0, 10, 2))
-
-        self.consumer.subscribe(topic)
+        self.consumer = KafkaConsumer(topic, group_id=group_id, bootstrap_servers=bootstrap_servers, api_version=(0, 10, 2))
 
     def payment_create_user(self, payload):
         payload['message_type'] = "create_user"
@@ -77,11 +75,9 @@ class KafkaConnector(Connector):
 
     def stock_item_create(self, payload):
         payload['message_type'] = "item_create"
-        print("TEST 1")
+
         self.producer.send('stock-worker', json.dumps(payload).encode('utf-8'))
-        print("TEST 2")
         self.producer.flush()
-        print("TEST 3")
 
     def order_create_user(self, payload):
         payload['message_type'] = "create_user"
