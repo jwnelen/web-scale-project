@@ -44,35 +44,39 @@ app = Flask("stock-service")
 
 @app.post('/item/create/<price>')
 def create_item(price: int):
-    r = spanner_db.create_item(price)
+    result = spanner_db.create_item(price)
 
-    if "error" in r:
-        return {"error": r["error"]}, 400
-    return r, 200
+    if "error" in result:
+        return result, 400
+
+    return result, 200
 
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
-    r = spanner_db.find_item(item_id)
+    result = spanner_db.find_item(item_id)
 
-    if "error" in r:
-        return {"error": r["error"]}, 400
-    return r, 200
+    if "error" in result:
+        return result, 400
+
+    return result, 200
 
 
 @app.post('/add/<item_id>/<amount>')
 def add_stock(item_id: str, amount: int):
-    r = spanner_db.add_stock(item_id, amount)
+    result = spanner_db.add_stock(item_id, amount)
 
-    if "error" in r:
-        return {"error": r["error"]}, 400
-    return r, 200
+    if "error" in result:
+        return result, 400
+
+    return result, 200
 
 
 @app.post('/subtract/<item_id>/<amount>')
 def remove_stock(item_id: str, amount: int):
-    r = spanner_db.remove_stock(item_id, amount)
+    result = spanner_db.remove_stock(item_id, amount)
 
-    if "error" in r:
-        return {"error": r["error"]}, 400
-    return r, 200
+    if "error" in result:
+        return result, 400
+
+    return result, 200

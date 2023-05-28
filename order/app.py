@@ -45,55 +45,57 @@ def create_order(user_id):
     # This is not needed anymore, because the constaints will take care of this
     # user_data = connector.payment_find_user(user_id)
 
-    r = spanner_db.create_order(user_id)
+    result = spanner_db.create_order(user_id)
 
-    if "error" in r:
-        return {"error": r["error"]}, 400
-    return r, 200
+    if "error" in result:
+        return result, 400
+
+    return result, 200
 
 
 @app.delete('/remove/<order_id>')
 def remove_order(order_id):
-    r = spanner_db.remove_order(order_id)
+    result = spanner_db.remove_order(order_id)
 
-    if "error" in r:
-        return r, 400
-    return r, 200
+    if "error" in result:
+        return result, 400
+
+    return result, 200
 
 
 @app.post('/addItem/<order_id>/<item_id>')
 def response_add_item(order_id, item_id):
-    result = connector.stock_find(item_id)
-    if "error" in result:
+    data = connector.stock_find(item_id)
+    if "error" in data:
         return {"error": "Could not find item"}, 400
 
-    data = spanner_db.add_item_to_order(order_id, item_id, result['price'])
-    if "error" in data:
-        return data, 400
+    result = spanner_db.add_item_to_order(order_id, item_id, data['price'])
+    if "error" in result:
+        return result, 400
 
-    return data, 200
+    return result, 200
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')
 def response_remove_item(order_id, item_id):
-    result = connector.stock_find(item_id)
-    if not result:
+    data = connector.stock_find(item_id)
+    if not data:
         return {"error": "Could not find item"}, 404
 
-    data = spanner_db.remove_item_from_order(order_id, item_id, result['price'])
-    if "error" in data:
-        return {"error": data["error"]}, 400
+    result = spanner_db.remove_item_from_order(order_id, item_id, data['price'])
+    if "error" in result:
+        return result, 400
 
-    return data, 200
+    return result, 200
 
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
-    res = spanner_db.find_order(order_id)
-    if res:
-        return res, 200
+    result = spanner_db.find_order(order_id)
+    if "error" in result:
+        return result, 400
 
-    return {}, 400
+    return result, 200
 
 
 def checkout(order_id):

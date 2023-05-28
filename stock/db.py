@@ -18,17 +18,16 @@ class StockDatabase:
     def create_item(self, price):
         item_id = str(uuid4())
 
-        try:
-            with self.database.batch() as batch:
-                batch.insert(
-                    table="stock",
-                    columns=("item_id", "price", "amount"),
-                    values=[(item_id, price, 0)],
-                )
+        def trans_create_item(transaction):
+            transaction.execute_update(
+                "INSERT INTO stock (item_id, price, amount) "
+                f"VALUES ('{item_id}', {price}, 0) "
+            )
 
+        try:
+            self.database.run_in_transaction(trans_create_item)
         except Exception as e:
             return {"error": str(e)}
-
         return {"item_id": item_id}
 
     def find_item(self, item_id):
@@ -55,7 +54,11 @@ class StockDatabase:
 
             return {"amount_rows_affected": row_ct}
 
-        return self.database.run_in_transaction(update_stock)
+        try:
+            res = self.database.run_in_transaction(update_stock)
+        except Exception as e:
+            return {"error": str(e)}
+        return res
 
     def remove_stock(self, item_id, amount):
         def update_stock(transaction):
@@ -67,4 +70,8 @@ class StockDatabase:
 
             return {"amount_rows_affected": row_ct}
 
-        return self.database.run_in_transaction(update_stock)
+        try:
+            res = self.database.run_in_transaction(update_stock)
+        except Exception as e:
+            return {"error": str(e)}
+        return res

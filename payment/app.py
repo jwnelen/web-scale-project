@@ -44,26 +44,32 @@ app = Flask("payment-service")
 
 @app.post('/create_user')
 def create_user():
-    r = spanner_db.create_user()
+    result = spanner_db.create_user()
 
-    if "error" in r:
-        return {"error": r["error"]}, 400
-    return r, 200
+    if "error" in result:
+        return result, 400
+
+    return result, 200
 
 
 @app.get('/find_user/<user_id>')
 def find_user(user_id: str):
-    r = spanner_db.find_user(user_id)
+    result = spanner_db.find_user(user_id)
 
-    if "error" in r:
-        return {"error": r["error"]}, 400
-    return r, 200
+    if "error" in result:
+        return result, 400
+
+    return result, 200
 
 
 @app.post('/add_funds/<user_id>/<amount>')
 def add_credit(user_id: str, amount: int):
-    r = spanner_db.add_credit_to_user(user_id, amount)
-    return r, 200
+    result = spanner_db.add_credit_to_user(user_id, amount)
+
+    if "error" in result:
+        return result, 400
+
+    return result, 200
 
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
@@ -86,7 +92,8 @@ def cancel_payment(user_id: str, order_id: str):
 
 @app.get('/status/<user_id>/<order_id>')
 def response_payment_status(user_id: str, order_id: str):
-    status = spanner_db.get_payment_status(order_id)
-    if "error" in status:
-        return {"error": status["error"]}, 400
-    return status, 200
+    result = spanner_db.get_payment_status(order_id)
+    if "error" in result:
+        return result, 400
+
+    return result, 200
