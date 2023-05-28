@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from google.api_core.exceptions import FailedPrecondition
 from google.cloud import spanner
+from google.cloud.spanner_v1.streamed import StreamedResultSet
 
 
 class OrderDatabase:
@@ -50,20 +51,36 @@ class OrderDatabase:
         return {"rows_affected": r}
 
     def find_order(self, order_id):
-        query = f"SELECT * FROM orders WHERE order_id = '{order_id}'"
+        orderItemsQuery = "SELECT * FROM orderItems"
+
+        new_query = f"SELECT * FROM orders AS o " \
+                    f"LEFT JOIN ({orderItemsQuery}) AS oi " \
+                    f"ON o.order_id = oi.order_id " \
+                    f"WHERE o.order_id = '{order_id}'"
 
         # For a single consistent read, use snapshot
         with self.database.snapshot() as snapshot:
             # Snapshots do not have an execute update method
-            result = snapshot.execute_sql(query).one_or_none()
+            results: StreamedResultSet = snapshot.execute_sql(new_query)
 
-            if result is None:
+            if results is None:
                 return {"error": "order does not exist"}
 
+            items = []
+            total_price = 0
+            result_list = list(results)
+            f = result_list[0]
+
+            for r in result_list:
+                items.append(r[4])
+                total_price += r[6]
+
             return {
-                "order_id": result[0],
-                "user_id": result[1],
-                "paid": result[2]
+                "order_id": f[0],
+                "user_id": f[1],
+                "paid": f[2],
+                "items": items,
+                "total_price": total_price
             }
 
     def add_item_to_order(self, order_id, item_id, price):
