@@ -1,7 +1,7 @@
 import os
 import threading
 
-from flask import Flask, g
+from flask import Flask
 
 from backend.docker_connector import DockerConnector
 from backend.eventbus_connectior import Eventbus_Connector
