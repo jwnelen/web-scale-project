@@ -11,6 +11,9 @@ gcloud auth configure-docker
 
 kubectl config use-context gke_wdmproject23-v2_europe-west4_app-cluster
 
+docker-compose build stock-worker-service
+docker-compose build stock-rest-service
+
 docker tag stock-rest gcr.io/wdmproject23-v2/stock-rest:latest
 docker push gcr.io/wdmproject23-v2/stock-rest:latest
 

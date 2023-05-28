@@ -34,9 +34,9 @@ spec:
               memory: "1Gi"
               cpu: "1"
           command: ["gunicorn"]
-          args: ["-b", "0.0.0.0:5000", "--chdir", "/src", "app:app"]
+          args: ["-b", "0.0.0.0:5000", "--chdir", "/home/app/src", "app:app"]
           ports:
             - containerPort: 5000
           env:
             - name: BOOTSTRAP_SERVERS
-              value: kafka-broker:9092
+              value: kafka-service:9092

@@ -6,7 +6,7 @@ COPY ./stock-worker/requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY ./stock-worker /src
-COPY ./backend /src/backend
+COPY ./stock-worker/ src/
+COPY ./backend/ src/backend/
 
 EXPOSE 5000

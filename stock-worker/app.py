@@ -1,3 +1,4 @@
+import json
 import os
 
 from uuid import uuid4
@@ -25,7 +26,7 @@ def open_connection():
     return Redis(connection_pool=pool)
 
 
-async def create_item(payload):
+def create_item(payload):
     data = payload['data']
     destination = payload['destination']
 
@@ -34,10 +35,10 @@ async def create_item(payload):
 
     conn = open_connection()
 
-    async with conn.pipeline(transaction=True) as pipe:
+    with conn.pipeline(transaction=True) as pipe:
         pipe.hset(f'item_id:{item_id}', 'price', float(price))
         pipe.hset(f'item_id:{item_id}', 'stock', 0)
-        await pipe.execute()
+        pipe.execute()
 
     conn.close()
 
@@ -45,12 +46,13 @@ async def create_item(payload):
 
     response = {'data': data,
                 'destination': destination}
-
+    print("Sending response")
     connector.deliver_response('stock-rest', response)
+    print("Response sent")
 
 
 def process_message(message):
-    payload = message.value().decode('utf-8')
+    payload = json.loads(message.value.decode('utf-8'))
     message_type = payload['message_type']
 
     if message_type == "item_create":
@@ -62,10 +64,8 @@ def main():
         for message in connector.consumer:
             if message is None:
                 continue
-            if message.error():
-                print("Consumer error: {}".format(message.error()))
-                continue
 
+            print("Message received")
             process_message(message)
 
 

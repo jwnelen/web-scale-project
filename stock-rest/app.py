@@ -1,3 +1,4 @@
+import json
 import os
 
 from uuid import uuid4
@@ -14,23 +15,22 @@ connector = KafkaConnector(bootstrap_servers, '', 'stock-rest')
 app = Flask("stock-rest-service")
 
 
-@app.get('/item/create/<price>')
+@app.route('/item/create/<price>')
 async def create_item(price: float):
-    destination = f'stock-{uuid4}'
+    destination = f'stock-{str(uuid4())}'
 
     payload = {'data': {'price': float(price)},
                'destination': destination}
 
     connector.stock_item_create(payload)
-
     data = {}
     waiting = True
 
     while waiting:
         try:
             for message in connector.consumer:
-                payload = message.value().decode('utf-8')
-
+                payload = json.loads(message.value.decode('utf-8'))
+                print(payload['destination'])
                 if payload['destination'] == destination:
                     data = payload['data']
                     waiting = False
