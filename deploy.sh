@@ -16,7 +16,6 @@ docker-compose build
 docker tag kafka-admin gcr.io/wdmproject23-v2/kafka-admin:latest
 docker push gcr.io/wdmproject23-v2/kafka-admin:latest
 
-
 docker tag order-rest gcr.io/wdmproject23-v2/order-rest:latest
 docker push gcr.io/wdmproject23-v2/order-rest:latest
 

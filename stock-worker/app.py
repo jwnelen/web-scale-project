@@ -1,12 +1,11 @@
 import json
 import os
+import threading
+import logging
 
 from uuid import uuid4
-
 from redis import Redis, BlockingConnectionPool
-
 from backend.kafka_connectior import KafkaConnector
-import logging
 
 
 def open_connection(db_pool):
@@ -15,7 +14,6 @@ def open_connection(db_pool):
 
 def create_item(payload, db_pool):
     data = payload['data']
-    print(data)
     destination = payload['destination']
 
     item_id = str(uuid4())
@@ -40,7 +38,6 @@ def create_item(payload, db_pool):
 
 def find_item(payload, db_pool):
     data = payload['data']
-    print(data)
     destination = payload['destination']
 
     item_id = data['item_id']
@@ -80,7 +77,7 @@ def consume_messages(connector, db_pool):
     print("Consuming")
     for message in connector.consumer:
         print("Message received")
-        process_message(message, connector, db_pool)
+        threading.Thread(target=process_message, args=[message, connector, db_pool]).start()
 
 
 def main():
@@ -104,7 +101,6 @@ def main():
 
 
 if __name__ == "__main__":
-    # asyncio.run(main())
     main()
 
 
