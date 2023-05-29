@@ -1,9 +1,11 @@
 import json
+import random
 
 from kafka import KafkaProducer, KafkaConsumer
-from uuid import uuid4
+
 from .connector import Connector
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -13,11 +15,23 @@ class KafkaConnector(Connector):
         super().__init__()
         self.type = "Eventbus Connector"
 
-        if not group_id:
-            group_id = str(uuid4())
+        self.producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
+                                      api_version=(0, 10, 2))
 
-        self.producer = KafkaProducer(bootstrap_servers=bootstrap_servers, api_version=(0, 10, 2))
-        self.consumer = KafkaConsumer(topic, group_id=group_id, bootstrap_servers=bootstrap_servers, api_version=(0, 10, 2))
+        if group_id is None:
+            self.consumer = KafkaConsumer(topic,
+                                          bootstrap_servers=bootstrap_servers,
+                                          group_id=str(random.randint(1, 10000)),
+                                          api_version=(0, 10, 2),
+                                          request_timeout_ms=600000,
+                                          connections_max_idle_ms=1200000)
+        else:
+            self.consumer = KafkaConsumer(topic,
+                                          group_id=group_id,
+                                          bootstrap_servers=bootstrap_servers,
+                                          api_version=(0, 10, 2),
+                                          request_timeout_ms=600000,
+                                          connections_max_idle_ms=1200000)
 
     def payment_create_user(self, payload):
         payload['message_type'] = "create_user"

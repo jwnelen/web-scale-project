@@ -1,3 +1,4 @@
+import random
 import unittest
 
 import utils as tu
@@ -5,9 +6,17 @@ import utils as tu
 
 class TestMicroservices(unittest.TestCase):
 
+    def test_find_item(self):
+        for i in range(200):
+            item: dict = tu.create_item(i)
+            item_id: str = item['item_id']
+            item: dict = tu.find_item(item_id)
+            print(item)
+
     def test_create_item(self):
-        item: dict = tu.create_item(343434)
-        print(item)
+        for i in range(1):
+            item = tu.create_item(i)
+            print(item)
 
     def test_stock(self):
         # Test /stock/item/create/<price>

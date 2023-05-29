@@ -36,3 +36,9 @@ services:
       context: ./
       dockerfile: ./payment-worker/Dockerfile
     image: payment-worker:latest
+
+  kafka-admin-service:
+    build:
+      context: ./
+      dockerfile: ./kafka-admin/Dockerfile
+    image: kafka-admin:latest

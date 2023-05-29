@@ -1,9 +1,8 @@
 import json
 import os
-import asyncio
-from time import sleep
 
 from uuid import uuid4
+
 from redis import Redis, BlockingConnectionPool
 
 from backend.kafka_connectior import KafkaConnector
@@ -39,12 +38,41 @@ def create_item(payload, db_pool):
     return response
 
 
+def find_item(payload, db_pool):
+    data = payload['data']
+    print(data)
+    destination = payload['destination']
+
+    item_id = data['item_id']
+
+    conn = open_connection(db_pool)
+
+    item = conn.exists(f'item_id:{item_id}')
+
+    if item == 0:
+        data = {}
+    else:
+        price = float(conn.hget(f'item_id:{item_id}', 'price').decode("utf-8"))
+        stock = int(conn.hget(f'item_id:{item_id}', 'stock').decode("utf-8"))
+
+        data = {'price': price, 'stock': stock}
+
+    conn.close()
+    response = {'data': data,
+                'destination': destination}
+
+    return response
+
+
 def process_message(message, connector, db_pool):
     payload = json.loads(message.value.decode('utf-8'))
     message_type = payload['message_type']
 
     if message_type == "item_create":
         response = create_item(payload, db_pool)
+        connector.deliver_response('stock-rest', response)
+    if message_type == "find":
+        response = find_item(payload, db_pool)
         connector.deliver_response('stock-rest', response)
 
 
@@ -62,7 +90,7 @@ def main():
     if 'BOOTSTRAP_SERVERS' in os.environ:
         bootstrap_servers = os.environ['BOOTSTRAP_SERVERS']
 
-    connector = KafkaConnector(bootstrap_servers, 'test', 'stock-worker')
+    connector = KafkaConnector(bootstrap_servers, 'stock', 'stock-worker')
 
     db_pool = BlockingConnectionPool(
         host=os.environ['REDIS_HOST'],
@@ -78,18 +106,8 @@ def main():
 if __name__ == "__main__":
     # asyncio.run(main())
     main()
-#
-# def find_item(item_id: str):
-#     item = g.db.hgetall(f'item_id:{item_id}')
-#     if item is None:
-#         return {}
-#     price = float(g.db.hget(f'item_id:{item_id}', 'price').decode("utf-8"))
-#     stock = int(g.db.hget(f'item_id:{item_id}', 'stock').decode("utf-8"))
-#
-#     data = {'price': price, 'stock': stock}
-#     return data
-#
-#
+
+
 # def add_stock(item_id: str, amount: int):
 #     with g.db.pipeline(transaction=True) as pipe:
 #         pipe.exists(f'item_id:{item_id}')
