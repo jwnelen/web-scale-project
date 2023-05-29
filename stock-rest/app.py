@@ -31,7 +31,7 @@ def retrieve_response():
 
 
 @app.post('/item/create/<price>')
-def create_item(price: float):
+async def create_item(price: float):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 

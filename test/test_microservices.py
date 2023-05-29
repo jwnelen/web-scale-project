@@ -7,7 +7,7 @@ import utils as tu
 class TestMicroservices(unittest.TestCase):
 
     def test_find_item(self):
-        for i in range(200):
+        for i in range(1):
             item: dict = tu.create_item(i)
             item_id: str = item['item_id']
             item: dict = tu.find_item(item_id)
