@@ -74,9 +74,7 @@ def process_message(message, connector, db_pool):
 
 
 def consume_messages(connector, db_pool):
-    print("Consuming")
     for message in connector.consumer:
-        print("Message received")
         threading.Thread(target=process_message, args=[message, connector, db_pool]).start()
 
 
