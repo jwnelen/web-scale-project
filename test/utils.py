@@ -2,7 +2,7 @@ import requests
 
 
 ORDER_URL = "http://127.0.0.1:5002"
-STOCK_URL = "http://127.0.0.1:5000"
+STOCK_URL = "http://34.90.201.164:5000"
 PAYMENT_URL = "http://127.0.0.1:5001"
 
 

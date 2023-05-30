@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: stock-worker-deployment
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       component: stock-worker
@@ -43,12 +43,3 @@ spec:
               value: "/tmp/keys/keyfile.json"
             - name: GCLOUD_PROJECT
               value: "wdmproject23-v2"
-          volumeMounts:
-          - name: keyfile-volume
-            mountPath: /tmp/keys/keyfile.json
-            readOnly: true
-      volumes:
-      - name: keyfile-volume
-        hostPath:
-          path: /tmp/google_key/application_default_credentials.json
-          type: File

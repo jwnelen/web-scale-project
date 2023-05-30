@@ -8,16 +8,16 @@ import utils as tu
 class TestMicroservices(unittest.TestCase):
 
     def test_async(self):
-        for n in range(10):
-            t = Thread(target=self.test_find_item)
+        for n in range(5):
+            t = Thread(target=self.test_find_item, args=(n,))
             t.start()
 
-    def test_find_item(self):
-        for i in range(30):
+    def test_find_item(self, n):
+        for i in range(50):
             item: dict = tu.create_item(i * 2.3)
             item_id: str = item['item_id']
             item: dict = tu.find_item(item_id)
-        print('done')
+        print(f'done {n}')
 
     def test_create_item(self):
         for i in range(1):
