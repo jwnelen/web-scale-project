@@ -2,23 +2,20 @@ apiVersion: v1
 kind: Service
 metadata:
   name: payment-worker-service
-  annotations:
-    networking.gke.io/load-balancer-type: "Internal"
 spec:
   selector:
     component: payment-worker
   ports:
-    - port: 5000
+    - port: 5001
       name: http
-      targetPort: 5000
-  type: LoadBalancer
+      targetPort: 5001
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: payment-worker-deployment
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       component: payment-worker
@@ -35,10 +32,10 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "1"
-          command: ["gunicorn"]
-          args: ["-b", "0.0.0.0:5000", "--chdir", "/src", "app:app"]
+          command: ["python3"]
+          args: ["/home/app/src/app.py"]
           ports:
-            - containerPort: 5000
+            - containerPort: 5001
           env:
             - name: REDIS_HOST
               value: payment-db
@@ -48,3 +45,5 @@ spec:
               value: "redis"
             - name: REDIS_DB
               value: "2"
+            - name: BOOTSTRAP_SERVERS
+              value: kafka-service:9092

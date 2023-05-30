@@ -8,7 +8,7 @@ class TestMicroservices(unittest.TestCase):
 
     def test_find_item(self):
         for i in range(10):
-            item: dict = tu.create_item(i*2.3)
+            item: dict = tu.create_item(i * 2.3)
             item_id: str = item['item_id']
             item: dict = tu.find_item(item_id)
             print(item)
@@ -53,6 +53,23 @@ class TestMicroservices(unittest.TestCase):
         stock_after_subtract: int = tu.find_item(item_id)['stock']
         print(stock_after_subtract)
         self.assertEqual(stock_after_subtract, 35)
+
+    def test_user(self):
+        user: dict = tu.create_user()
+        print(user)
+
+    def test_find_user(self):
+        user: dict = tu.create_user()
+        data: dict = tu.find_user(user['user_id'])
+        print(data)
+
+    def test_add_credit(self):
+        user: dict = tu.create_user()
+        user_id: str = user['user_id']
+        add_credit_response = tu.add_credit_to_user(user_id, 15)
+        print(add_credit_response)
+        data: dict = tu.find_user(user['user_id'])
+        print(data)
 
     def test_payment(self):
         # Test /payment/pay/<user_id>/<order_id>
@@ -127,7 +144,7 @@ class TestMicroservices(unittest.TestCase):
 
         add_item_response = tu.add_item_to_order(order_id, item_id2)
         self.assertTrue(tu.status_code_is_success(add_item_response))
-        
+
         subtract_stock_response = tu.subtract_stock(item_id2, 1)
         self.assertTrue(tu.status_code_is_success(subtract_stock_response))
 

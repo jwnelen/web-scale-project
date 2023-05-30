@@ -16,7 +16,7 @@ kind: Deployment
 metadata:
   name: stock-rest-deployment
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       component: stock-rest
