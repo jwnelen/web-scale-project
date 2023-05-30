@@ -72,7 +72,7 @@ async def find_user(user_id: str):
 
 
 @app.post('/add_funds/<user_id>/<amount>')
-async def add_credit(user_id: str, amount: float):
+async def add_funds(user_id: str, amount: float):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 
@@ -91,7 +91,7 @@ async def add_credit(user_id: str, amount: float):
 
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
-async def remove_credit(user_id: str, order_id: str, amount: float):
+async def pay(user_id: str, order_id: str, amount: float):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 
@@ -111,7 +111,7 @@ async def remove_credit(user_id: str, order_id: str, amount: float):
 
 
 @app.post('/cancel/<user_id>/<order_id>')
-async def cancel_payment(user_id: str, order_id: str):
+async def cancel(user_id: str, order_id: str):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 
@@ -130,7 +130,7 @@ async def cancel_payment(user_id: str, order_id: str):
 
 
 @app.get('/status/<user_id>/<order_id>')
-async def payment_status(user_id: str, order_id: str):
+async def status(user_id: str, order_id: str):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 

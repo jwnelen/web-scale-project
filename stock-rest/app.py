@@ -39,7 +39,7 @@ def get_response(destination):
 
 
 @app.post('/item/create/<price>')
-async def create_item(price: float):
+async def item_create(price: float):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
@@ -54,7 +54,7 @@ async def create_item(price: float):
 
 
 @app.get('/find/<item_id>')
-async def find_item(item_id: str):
+async def find(item_id: str):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
@@ -72,7 +72,7 @@ async def find_item(item_id: str):
 
 
 @app.post('/add/<item_id>/<amount>')
-async def add_stock(item_id: str, amount: int):
+async def add(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
@@ -91,7 +91,7 @@ async def add_stock(item_id: str, amount: int):
 
 
 @app.post('/subtract/<item_id>/<amount>')
-async def response_remove_stock(item_id: str, amount: int):
+async def subtract(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 

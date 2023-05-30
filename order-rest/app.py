@@ -38,57 +38,112 @@ def get_response(destination):
             return response
 
 
-# @app.post('/create/<user_id>')
-# def response_create_order(user_id):
-#     data = create_order(user_id)
-#     if not data:
-#         return make_response(jsonify({}), 400)
-#
-#     return make_response(jsonify(data), 200)
-#
-#
-# @app.delete('/remove/<order_id>')
-# def response_remove_order(order_id):
-#     succeeded = remove_order(order_id)
-#
-#     if not succeeded:
-#         return make_response(jsonify({}), 400)
-#
-#     return make_response(jsonify({}), 200)
-#
-#
-# @app.post('/addItem/<order_id>/<item_id>')
-# def response_add_item(order_id, item_id):
-#     data = add_item(order_id, item_id)
-#
-#     if not data:
-#         return make_response(jsonify({}), 404)
-#
-#     return make_response(jsonify(data), 200)
-#
-#
-# @app.delete('/removeItem/<order_id>/<item_id>')
-# def response_remove_item(order_id, item_id):
-#     data = remove_item(order_id, item_id)
-#     return make_response(jsonify(data), 200)
-#
-#
-# @app.get('/find/<order_id>')
-# def response_find_order(order_id):
-#     data = find_order(order_id)
-#
-#     if not data:
-#         return make_response(jsonify({}), 400)
-#
-#     return make_response(jsonify(data), 200)
-#
-#
-# @app.post('/checkout/<order_id>')
-# def response_checkout(order_id):
-#     succeeded = checkout(order_id)
-#
-#     if not succeeded:
-#         return make_response(jsonify({}), 400)
-#
-#     return make_response(jsonify({}), 200)
-#
+@app.post('/create/<user_id>')
+async def create(user_id):
+    destination = f'order-{str(uuid4())}'
+    waiting[destination] = True
+
+    payload = {'data': {'user_id': user_id},
+               'destination': destination}
+
+    connector.order_create_user(payload)
+
+    response = get_response(destination)
+
+    if not response:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(response), 200)
+
+
+@app.delete('/remove/<order_id>')
+async def remove(order_id):
+    destination = f'order-{str(uuid4())}'
+    waiting[destination] = True
+
+    payload = {'data': {'order_id': order_id},
+               'destination': destination}
+
+    connector.order_remove(payload)
+
+    response = get_response(destination)
+
+    if not response['success']:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(response), 200)
+
+
+@app.post('/addItem/<order_id>/<item_id>')
+async def add_item(order_id, item_id):
+    destination = f'order-{str(uuid4())}'
+    waiting[destination] = True
+
+    payload = {'data': {'order_id': order_id,
+                        'item_id': item_id},
+               'destination': destination}
+
+    connector.order_addItem(payload)
+
+    response = get_response(destination)
+
+    if not response:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(response), 200)
+
+
+@app.delete('/removeItem/<order_id>/<item_id>')
+async def remove_item(order_id, item_id):
+    destination = f'order-{str(uuid4())}'
+    waiting[destination] = True
+
+    payload = {'data': {'order_id': order_id,
+                        'item_id': item_id},
+               'destination': destination}
+
+    connector.order_removeItem(payload)
+
+    response = get_response(destination)
+
+    if not response['success']:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(response), 200)
+
+
+@app.get('/find/<order_id>')
+async def find(order_id):
+    destination = f'order-{str(uuid4())}'
+    waiting[destination] = True
+
+    payload = {'data': {'order_id': order_id},
+               'destination': destination}
+
+    connector.order_find(payload)
+
+    response = get_response(destination)
+
+    if not response:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(response), 200)
+
+
+@app.post('/checkout/<order_id>')
+async def checkout(order_id):
+    destination = f'order-{str(uuid4())}'
+    waiting[destination] = True
+
+    payload = {'data': {'order_id': order_id},
+               'destination': destination}
+
+    connector.order_checkout(payload)
+
+    response = get_response(destination)
+
+    if not response['success']:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(response), 200)
+
