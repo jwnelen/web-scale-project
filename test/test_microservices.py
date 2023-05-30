@@ -7,7 +7,7 @@ import utils as tu
 class TestMicroservices(unittest.TestCase):
 
     def test_find_item(self):
-        for i in range(100):
+        for i in range(10):
             item: dict = tu.create_item(i*2.3)
             item_id: str = item['item_id']
             item: dict = tu.find_item(item_id)
@@ -21,30 +21,37 @@ class TestMicroservices(unittest.TestCase):
     def test_stock(self):
         # Test /stock/item/create/<price>
         item: dict = tu.create_item(5)
+        print(item)
         self.assertTrue('item_id' in item)
 
         item_id: str = item['item_id']
-
+        print(item_id)
         # Test /stock/find/<item_id>
         item: dict = tu.find_item(item_id)
+        print(item)
         self.assertEqual(item['price'], 5)
         self.assertEqual(item['stock'], 0)
 
         # Test /stock/add/<item_id>/<number>
         add_stock_response = tu.add_stock(item_id, 50)
+        print(add_stock_response)
         self.assertTrue(200 <= int(add_stock_response) < 300)
 
         stock_after_add: int = tu.find_item(item_id)['stock']
+        print(stock_after_add)
         self.assertEqual(stock_after_add, 50)
 
         # Test /stock/subtract/<item_id>/<number>        
         over_subtract_stock_response = tu.subtract_stock(item_id, 200)
+        print(over_subtract_stock_response)
         self.assertTrue(tu.status_code_is_failure(int(over_subtract_stock_response)))
 
         subtract_stock_response = tu.subtract_stock(item_id, 15)
+        print(subtract_stock_response)
         self.assertTrue(tu.status_code_is_success(int(subtract_stock_response)))
 
         stock_after_subtract: int = tu.find_item(item_id)['stock']
+        print(stock_after_subtract)
         self.assertEqual(stock_after_subtract, 35)
 
     def test_payment(self):

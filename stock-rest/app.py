@@ -30,6 +30,14 @@ def retrieve_response():
             waiting.pop(destination)
 
 
+def get_response(destination):
+    while True:
+        if destination in messages:
+            response = messages[destination]
+            messages.pop(destination)
+            return response
+
+
 @app.post('/item/create/<price>')
 async def create_item(price: float):
     destination = f'stock-{str(uuid4())}'
@@ -40,17 +48,13 @@ async def create_item(price: float):
 
     connector.stock_item_create(payload)
 
-    while True:
-        if destination in messages:
-            response = messages[destination]
-            messages.pop(destination)
-            break
+    response = get_response(destination)
 
     return make_response(jsonify(response), 200)
 
 
 @app.get('/find/<item_id>')
-async def response_find_item(item_id: str):
+async def find_item(item_id: str):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
@@ -59,31 +63,45 @@ async def response_find_item(item_id: str):
 
     connector.stock_find(payload)
 
-    while True:
-        if destination in messages:
-            response = messages[destination]
-            messages.pop(destination)
-            break
+    response = get_response(destination)
 
     if not response:
         return make_response(jsonify({}), 400)
 
     return make_response(jsonify(response), 200)
-#
-#
-# @app.post('/add/<item_id>/<amount>')
-# async def response_add_stock(item_id: str, amount: int):
-#     succeeded = await connector.stock_add(item_id, amount)
-#     if succeeded:
-#         return make_response(jsonify({}), 200)
-#     else:
-#         return make_response(jsonify({}), 400)
-#
-#
-# @app.post('/subtract/<item_id>/<amount>')
-# async def response_remove_stock(item_id: str, amount: int):
-#     data = await connector.stock_subtract(item_id, amount)
-#     if not data:
-#         return make_response(jsonify({}), 400)
-#
-#     return make_response(jsonify(data), 200)
+
+
+@app.post('/add/<item_id>/<amount>')
+async def add_stock(item_id: str, amount: int):
+    destination = f'stock-{str(uuid4())}'
+    waiting[destination] = True
+
+    payload = {'data': {'item_id': item_id, 'amount': amount},
+               'destination': destination}
+
+    connector.stock_add(payload)
+
+    response = get_response(destination)
+
+    if not response['success']:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(response), 200)
+
+
+@app.post('/subtract/<item_id>/<amount>')
+async def response_remove_stock(item_id: str, amount: int):
+    destination = f'stock-{str(uuid4())}'
+    waiting[destination] = True
+
+    payload = {'data': {'item_id': item_id, 'amount': amount},
+               'destination': destination}
+
+    connector.stock_subtract(payload)
+
+    response = get_response(destination)
+
+    if not response['success']:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify(response), 200)

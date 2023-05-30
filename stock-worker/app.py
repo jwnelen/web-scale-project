@@ -36,7 +36,7 @@ def create_item(payload, db_pool):
     return response
 
 
-def find_item(payload, db_pool):
+def find(payload, db_pool):
     data = payload['data']
     destination = payload['destination']
 
@@ -55,6 +55,69 @@ def find_item(payload, db_pool):
         data = {'price': price, 'stock': stock}
 
     conn.close()
+
+    response = {'data': data,
+                'destination': destination}
+
+    return response
+
+
+def add(payload, db_pool):
+    data = payload['data']
+    destination = payload['destination']
+
+    item_id = data['item_id']
+    amount = int(data['amount'])
+
+    conn = open_connection(db_pool)
+
+    with conn.pipeline(transaction=True) as pipe:
+        pipe.exists(f'item_id:{item_id}')
+        exists = pipe.execute()[0]
+        if exists:
+            pipe.hincrby(f'item_id:{item_id}', 'stock', amount)
+            pipe.execute()
+            data = {'success': True}
+        else:
+            data = {'success': False}
+
+    conn.close()
+
+    response = {'data': data,
+                'destination': destination}
+
+    return response
+
+
+def subtract(payload, db_pool):
+    data = payload['data']
+    destination = payload['destination']
+
+    item_id = data['item_id']
+    amount = int(data['amount'])
+
+    conn = open_connection(db_pool)
+
+    with conn.pipeline(transaction=True) as pipe:
+        pipe.exists(f'item_id:{item_id}')
+        exists = pipe.execute()[0]
+
+        if not exists:
+            data = {'success': False}
+        else:
+            pipe.hget(f'item_id:{item_id}', 'stock')
+            stock = int(pipe.execute()[0].decode('utf-8'))
+
+            if stock >= amount:
+                pipe.hincrby(f'item_id:{item_id}', 'stock', -amount)
+                stock -= amount
+                pipe.execute()
+                data = {'success': True}
+            else:
+                data = {'success': False}
+
+    conn.close()
+
     response = {'data': data,
                 'destination': destination}
 
@@ -69,7 +132,13 @@ def process_message(message, connector, db_pool):
         response = create_item(payload, db_pool)
         connector.deliver_response('stock-rest', response)
     if message_type == "find":
-        response = find_item(payload, db_pool)
+        response = find(payload, db_pool)
+        connector.deliver_response('stock-rest', response)
+    if message_type == "add":
+        response = add(payload, db_pool)
+        connector.deliver_response('stock-rest', response)
+    if message_type == "subtract":
+        response = subtract(payload, db_pool)
         connector.deliver_response('stock-rest', response)
 
 
@@ -100,34 +169,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# def add_stock(item_id: str, amount: int):
-#     with g.db.pipeline(transaction=True) as pipe:
-#         pipe.exists(f'item_id:{item_id}')
-#         exists = pipe.execute()[0]
-#         if exists:
-#             pipe.hincrby(f'item_id:{item_id}', 'stock', int(amount))
-#             pipe.execute()
-#             return True
-#         else:
-#             return False
-#
-#
-# def remove_stock(item_id: str, amount: int):
-#     with g.db.pipeline(transaction=True) as pipe:
-#         pipe.exists(f'item_id:{item_id}')
-#         exists = pipe.execute()[0]
-#
-#         if not exists:
-#             return {}
-#         pipe.hget(f'item_id:{item_id}', 'stock')
-#         stock = int(pipe.execute()[0].decode('utf-8'))
-#
-#         if stock < int(amount):
-#             return {}
-#
-#         pipe.hincrby(f'item_id:{item_id}', 'stock', -int(amount))
-#         stock -= int(amount)
-#         pipe.execute()
-#     data = {'stock': stock}
-#     return data
