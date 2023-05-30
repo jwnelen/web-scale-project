@@ -104,7 +104,7 @@ async def remove_credit(user_id: str, order_id: str, amount: float):
 
     response = get_response(destination)
 
-    if not response:
+    if not response['success']:
         return make_response(jsonify({}), 400)
 
     return make_response(jsonify({}), 200)
@@ -123,7 +123,7 @@ async def cancel_payment(user_id: str, order_id: str):
 
     response = get_response(destination)
 
-    if not response:
+    if not response['success']:
         return make_response(jsonify({}), 400)
 
     return make_response(jsonify({}), 200)

@@ -90,69 +90,81 @@ def add_funds(payload, db_pool):
 
 
 def pay(payload, db_pool):
-    # with g.db.pipeline(transaction=True) as pipe:
-    #     pipe.hget(f'user_id:{user_id}', 'credit')
-    #     credit = float(pipe.execute()[0].decode('utf-8'))
-    #
-    #     if credit < float(amount):
-    #         return False
-    #
-    #     credit -= float(amount)
-    #     pipe.hset(f'user_id:{user_id}', 'credit', credit)
-    #     pipe.execute()
-    #
-    # return True
     data = payload['data']
     destination = payload['destination']
 
+    user_id = data['user_id']
+    order_id = data['order_id']  # TODO: Make cancellation possible, store orders
+    amount = float(data['amount'])
+
     conn = open_connection(db_pool)
 
+    with conn.pipeline(transaction=True) as pipe:
+        pipe.hget(f'user_id:{user_id}', 'credit')
+        credit = float(pipe.execute()[0].decode('utf-8'))
+
+        if credit >= amount:
+            credit -= amount
+            pipe.hset(f'user_id:{user_id}', 'credit', credit)
+            pipe.execute()
+            data = {'success': True}
+        else:
+            data = {'success': False}
+
     conn.close()
-    data = {}
+
     response = {'data': data,
                 'destination': destination}
 
     return response
+
 
 def cancel(payload, db_pool):
-    # with g.db.pipeline(transaction=True) as pipe:
-    #     pipe.hget(f'order_id:{order_id}', 'paid')
-    #     status = pipe.execute()[0].decode('utf-8')
-    #     if status == 1:
-    #         pipe.hset(f'order_id:{order_id}', 'paid', 0)
-    #         pipe.execute()
-    #         return True
-    #
-    # # return failure if we try to cancel payment for order which is not yet paid ?
-    # return False
     data = payload['data']
     destination = payload['destination']
 
+    user_id = data['user_id']
+    order_id = data['order_id']  # TODO: Make cancellation possible, store orders
+
     conn = open_connection(db_pool)
 
+    with conn.pipeline(transaction=True) as pipe:
+        pipe.hget(f'order_id:{order_id}', 'paid')  # TODO: Will currently fail
+        payment_status = pipe.execute()[0].decode('utf-8')
+
+        if payment_status == 1:
+            pipe.hset(f'order_id:{order_id}', 'paid', 0)
+            pipe.execute()
+            data = {'success': True}
+        else:
+            data = {'success': False}
+
     conn.close()
-    data = {}
+
     response = {'data': data,
                 'destination': destination}
 
     return response
 
-def status(payload, db_pool):
-    # status = g.db.hget(f'order_id:{order_id}', 'paid').decode('utf-8')
-    #
-    # if not status:
-    #     return {}
-    #
-    # data = {"paid": status}
-    # return data
 
+def status(payload, db_pool):
     data = payload['data']
     destination = payload['destination']
 
+    user_id = data['user_id']
+    order_id = data['order_id']  # TODO: Make cancellation possible, store orders
+
     conn = open_connection(db_pool)
 
+    payment_status = conn.hget(f'order_id:{order_id}', 'paid').decode('utf-8')
+
+    if not payment_status:
+        data = {"paid": False}
+    else:
+        data = {"paid": True}
+
     conn.close()
-    data = {}
+
     response = {'data': data,
                 'destination': destination}
 
