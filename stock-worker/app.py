@@ -75,7 +75,8 @@ def process_message(message, connector, db_pool):
 
 def consume_messages(connector, db_pool):
     for message in connector.consumer:
-        threading.Thread(target=process_message, args=[message, connector, db_pool]).start()
+        # threading.Thread(target=process_message, args=(message, connector, db_pool).start()
+        process_message(message, connector, db_pool)
 
 
 def main():
@@ -100,7 +101,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 # def add_stock(item_id: str, amount: int):
 #     with g.db.pipeline(transaction=True) as pipe:

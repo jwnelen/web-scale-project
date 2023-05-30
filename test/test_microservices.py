@@ -8,7 +8,7 @@ class TestMicroservices(unittest.TestCase):
 
     def test_find_item(self):
         for i in range(100):
-            item: dict = tu.create_item(i)
+            item: dict = tu.create_item(i*2.3)
             item_id: str = item['item_id']
             item: dict = tu.find_item(item_id)
             print(item)
