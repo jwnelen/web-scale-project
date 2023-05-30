@@ -70,6 +70,9 @@ class TestMicroservices(unittest.TestCase):
         print(add_credit_response)
         data: dict = tu.find_user(user['user_id'])
         print(data)
+        add_credit_response = tu.add_credit_to_user(user_id, -3)
+        data: dict = tu.find_user(user['user_id'])
+        print(data)
 
     def test_payment(self):
         # Test /payment/pay/<user_id>/<order_id>
