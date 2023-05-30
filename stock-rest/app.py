@@ -76,7 +76,8 @@ async def add_stock(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
-    payload = {'data': {'item_id': item_id, 'amount': amount},
+    payload = {'data': {'item_id': item_id,
+                        'amount': int(amount)},
                'destination': destination}
 
     connector.stock_add(payload)
@@ -94,7 +95,8 @@ async def response_remove_stock(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
-    payload = {'data': {'item_id': item_id, 'amount': amount},
+    payload = {'data': {'item_id': item_id,
+                        'amount': int(amount)},
                'destination': destination}
 
     connector.stock_subtract(payload)
