@@ -39,8 +39,8 @@ def get_response(destination):
 
 
 @app.post('/create_user')
-async def response_create_user():
-    destination = f'stock-{str(uuid4())}'
+async def create_user():
+    destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 
     payload = {'data': {},
