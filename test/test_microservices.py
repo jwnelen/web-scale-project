@@ -1,17 +1,23 @@
 import random
 import unittest
+from threading import Thread
 
 import utils as tu
 
 
 class TestMicroservices(unittest.TestCase):
 
+    def test_async(self):
+        for n in range(10):
+            t = Thread(target=self.test_find_item)
+            t.start()
+
     def test_find_item(self):
-        for i in range(10):
+        for i in range(30):
             item: dict = tu.create_item(i * 2.3)
             item_id: str = item['item_id']
             item: dict = tu.find_item(item_id)
-            print(item)
+        print('done')
 
     def test_create_item(self):
         for i in range(1):

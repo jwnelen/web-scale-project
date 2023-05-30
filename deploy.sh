@@ -46,7 +46,6 @@ kubectl apply -f kafka.yaml
 sleep 10
 
 kubectl apply -f order-db.yaml
-kubectl apply -f stock-db.yaml
 kubectl apply -f payment-db.yaml
 
 sleep 15

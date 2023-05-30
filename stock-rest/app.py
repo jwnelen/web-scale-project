@@ -50,6 +50,9 @@ async def item_create(price: float):
 
     response = get_response(destination)
 
+    if not response:
+        return make_response(jsonify({}), 400)
+
     return make_response(jsonify(response), 200)
 
 

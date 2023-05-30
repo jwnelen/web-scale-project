@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+#start minikube and mount credentials
+#minikube start --mount --mount-string="/home/USERNAME/.config/gcloud:/tmp/google_key"
+
 kubectl config use-context minikube
-# Fixes a bug on ubuntu
-kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
+
 eval $(minikube docker-env)
 
 docker-compose build
@@ -38,7 +40,6 @@ kubectl apply -f kafka.yaml
 
 sleep 15
 
-kubectl apply -f stock-db.yaml
 kubectl apply -f payment-db.yaml
 kubectl apply -f order-db.yaml
 
