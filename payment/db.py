@@ -47,15 +47,22 @@ class UserDatabase:
 
     def add_credit_to_user(self, user_id, amount):
         def update_user(transaction):
-            res = transaction.execute_sql(
-                "UPDATE users "
-                f"SET credit = credit + {amount} "
-                f"WHERE (user_id) = '{user_id}'",
+
+            current_credit = transaction.execute_sql(
+                f"SELECT credit FROM users WHERE user_id = '{user_id}'"
             ).one_or_none()
-            if res is None:
+
+            if current_credit is None:
                 return {"error": "user_id does not exist"}
 
-            return res
+            new_credit = float(current_credit[0]) + float(amount)
+            rows_aff = transaction.execute_update(
+                "UPDATE users "
+                f"SET credit = {new_credit} "
+                f"WHERE (user_id) = '{user_id}'",
+            )
+
+            return {"done": True, "amount_rows_affected": rows_aff}
 
         try:
             return self.database.run_in_transaction(update_user)
@@ -65,13 +72,21 @@ class UserDatabase:
     def remove_credit_from_user(self, user_id, amount):
         def update_credit(transaction):
             # There is a check in the DB that credit cannot be negative
-            row_ct = transaction.execute_update(
+            current_credit = transaction.execute_sql(
+                f"SELECT credit FROM users WHERE user_id = '{user_id}'"
+            ).one_or_none()
+
+            if current_credit is None:
+                return {"error": "user_id does not exist"}
+
+            new_credit = float(current_credit[0]) - float(amount)
+            rows_aff = transaction.execute_update(
                 "UPDATE users "
-                f"SET credit = credit - {amount} "
+                f"SET credit = {new_credit} "
                 f"WHERE (user_id) = '{user_id}'",
             )
 
-            return {"amount_rows_affected": row_ct}
+            return {"done": True, "amount_rows_affected": rows_aff}
 
         try:
             return self.database.run_in_transaction(update_credit)
