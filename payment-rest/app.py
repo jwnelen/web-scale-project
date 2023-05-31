@@ -30,7 +30,7 @@ def retrieve_response():
             waiting.pop(destination)
 
 
-def get_response(destination):
+async def get_response(destination):
     while True:
         if destination in messages:
             response = messages[destination]
@@ -48,7 +48,7 @@ async def create_user():
 
     connector.payment_create_user(payload)
 
-    response = get_response(destination)
+    response = await get_response(destination)
 
     return make_response(jsonify(response), 200)
 
@@ -63,7 +63,7 @@ async def find_user(user_id: str):
 
     connector.payment_find_user(payload)
 
-    response = get_response(destination)
+    response = await get_response(destination)
 
     if not response:
         return make_response(jsonify({}), 400)
@@ -82,51 +82,12 @@ async def add_funds(user_id: str, amount: float):
 
     connector.payment_add_funds(payload)
 
-    response = get_response(destination)
+    response = await get_response(destination)
 
     if not response['done']:
         return make_response(jsonify(response), 400)
 
     return make_response(jsonify(response), 200)
-
-
-@app.post('/pay/<user_id>/<order_id>/<amount>')
-async def pay(user_id: str, order_id: str, amount: float):
-    destination = f'payment-{str(uuid4())}'
-    waiting[destination] = True
-
-    payload = {'data': {'user_id': user_id,
-                        'order_id': order_id,
-                        'amount': float(amount)},
-               'destination': destination}
-
-    connector.payment_pay(payload)
-
-    response = get_response(destination)
-
-    if not response['success']:
-        return make_response(jsonify({}), 400)
-
-    return make_response(jsonify({}), 200)
-
-
-@app.post('/cancel/<user_id>/<order_id>')
-async def cancel(user_id: str, order_id: str):
-    destination = f'payment-{str(uuid4())}'
-    waiting[destination] = True
-
-    payload = {'data': {'user_id': user_id,
-                        'order_id': order_id},
-               'destination': destination}
-
-    connector.payment_cancel(payload)
-
-    response = get_response(destination)
-
-    if not response['success']:
-        return make_response(jsonify({}), 400)
-
-    return make_response(jsonify({}), 200)
 
 
 @app.get('/status/<user_id>/<order_id>')
@@ -140,7 +101,7 @@ async def status(user_id: str, order_id: str):
 
     connector.payment_status(payload)
 
-    response = get_response(destination)
+    response = await get_response(destination)
 
     if not response['paid']:
         return make_response(jsonify(response), 400)

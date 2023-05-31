@@ -30,7 +30,7 @@ def retrieve_response():
             waiting.pop(destination)
 
 
-def get_response(destination):
+async def get_response(destination):
     while True:
         if destination in messages:
             response = messages[destination]
@@ -48,7 +48,7 @@ async def item_create(price: float):
 
     connector.stock_item_create(payload)
 
-    response = get_response(destination)
+    response = await get_response(destination)
 
     if not response:
         return make_response(jsonify({}), 400)
@@ -66,7 +66,7 @@ async def find(item_id: str):
 
     connector.stock_find(payload)
 
-    response = get_response(destination)
+    response = await get_response(destination)
 
     if not response:
         return make_response(jsonify({}), 400)
@@ -85,7 +85,7 @@ async def add(item_id: str, amount: int):
 
     connector.stock_add(payload)
 
-    response = get_response(destination)
+    response = await get_response(destination)
 
     if not response['success']:
         return make_response(jsonify({}), 400)
@@ -104,7 +104,7 @@ async def subtract(item_id: str, amount: int):
 
     connector.stock_subtract(payload)
 
-    response = get_response(destination)
+    response = await get_response(destination)
 
     if not response['success']:
         return make_response(jsonify({}), 400)

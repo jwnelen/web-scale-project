@@ -16,7 +16,7 @@ kind: Deployment
 metadata:
   name: stock-rest-deployment
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       component: stock-rest
@@ -31,8 +31,8 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: "1Gi"
-              cpu: "1"
+              memory: "256Mi"
+              cpu: "2"
           command: ["gunicorn"]
           args: ["-b", "0.0.0.0:5000", "--timeout", "90", "--chdir", "/home/app/src", "app:start()"]
           ports:

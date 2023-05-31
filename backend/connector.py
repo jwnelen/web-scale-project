@@ -14,14 +14,6 @@ class Connector(ABC):
         pass
 
     @abstractmethod
-    def payment_pay(self, payload):
-        pass
-
-    @abstractmethod
-    def payment_cancel(self, payload):
-        pass
-
-    @abstractmethod
     def payment_status(self, payload):
         pass
 

@@ -1,10 +1,9 @@
 import json
 import random
+import logging
 
 from kafka import KafkaProducer, KafkaConsumer
-
 from .connector import Connector
-import logging
 
 logging.basicConfig(level=logging.INFO)
 
@@ -41,18 +40,6 @@ class KafkaConnector(Connector):
 
     def payment_find_user(self, payload):
         payload['message_type'] = "find_user"
-
-        self.producer.send('payment-worker', json.dumps(payload).encode('utf-8'))
-        self.producer.flush()
-
-    def payment_pay(self, payload):
-        payload['message_type'] = "pay"
-
-        self.producer.send('payment-worker', json.dumps(payload).encode('utf-8'))
-        self.producer.flush()
-
-    def payment_cancel(self, payload):
-        payload['message_type'] = "cancel"
 
         self.producer.send('payment-worker', json.dumps(payload).encode('utf-8'))
         self.producer.flush()

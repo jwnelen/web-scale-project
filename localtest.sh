@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #start minikube and mount credentials
-#minikube start --mount --mount-string="/home/USERNAME/.config/gcloud:/tmp/google_key"
+#minikube start
 
 kubectl config use-context minikube
 
@@ -39,11 +39,6 @@ sleep 15
 kubectl apply -f kafka.yaml
 
 sleep 15
-
-#kubectl apply -f payment-db.yaml
-#kubectl apply -f order-db.yaml
-
-#sleep 15
 
 kubectl apply -f kafka-admin.yaml
 
