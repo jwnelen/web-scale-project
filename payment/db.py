@@ -47,15 +47,20 @@ class UserDatabase:
 
     def add_credit_to_user(self, user_id, amount):
         def update_user(transaction):
-            row_ct = transaction.execute_update(
+            res = transaction.execute_sql(
                 "UPDATE users "
                 f"SET credit = credit + {amount} "
                 f"WHERE (user_id) = '{user_id}'",
-            )
+            ).one_or_none()
+            if res is None:
+                return {"error": "user_id does not exist"}
 
-            return {"amount_rows_affected": row_ct}
+            return res
 
-        return self.database.run_in_transaction(update_user)
+        try:
+            return self.database.run_in_transaction(update_user)
+        except Exception as e:
+            return {"error": str(e)}
 
     def remove_credit_from_user(self, user_id, amount):
         def update_credit(transaction):

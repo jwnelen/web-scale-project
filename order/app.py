@@ -101,7 +101,8 @@ def find_order(order_id):
 @app.post('/checkout/<order_id>')
 def checkout(order_id):
     result = spanner_db.pay_order(order_id)
+    print("PAY ORDER RESULT", result)
     if "error" in result:
         return {"succeeded": False}, 400
 
-    return {"succeeded": True}, 200
+    return result, 200

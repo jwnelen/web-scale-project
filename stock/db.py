@@ -34,6 +34,7 @@ class StockDatabase:
         query = f"SELECT * FROM stock WHERE item_id = '{item_id}'"
 
         with self.database.snapshot() as snapshot:
+
             result = snapshot.execute_sql(query).one_or_none()
 
             if result is None:
@@ -45,7 +46,7 @@ class StockDatabase:
 
     def add_stock(self, item_id, amount):
         def update_stock(transaction):
-            row_ct = transaction.execute_update(
+            row_ct = transaction.execute_sql(
                 "UPDATE stock "
                 f"SET amount = amount + {amount} "
                 f"WHERE (item_id) = '{item_id}'"
@@ -64,16 +65,17 @@ class StockDatabase:
             current_stock = transaction.execute_sql(
                 f"SELECT amount FROM stock WHERE item_id = '{item_id}'"
             ).one_or_none()
+
             if int(amount) > int(current_stock[0]):
                 return {"error": "not enough stock"}
 
-            row_ct = transaction.execute_update(
+            transaction.execute_sql(
                 "UPDATE stock "
                 f"SET amount = amount - {amount} "
                 f"WHERE (item_id) = '{item_id}'"
             )
 
-            return {"amount_rows_affected": row_ct}
+            return {"done": True}
 
         try:
             res = self.database.run_in_transaction(update_stock)

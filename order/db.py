@@ -17,14 +17,17 @@ class OrderDatabase:
         self.instance = spanner_client.instance(instance_id)
         self.database = self.instance.database(database_id)
 
-    # Execute UPDATE will return the number of rows affected
-    # Execute SQL will return the result set
+    # DML, f: execute_update, rows affected, visible to subsequent reads or SQL, f: execute_sql, result set
+    # Changes you make using DML statements are visible to subsequent statements in the same transaction
+
+    # Mutations
+    # This is different from using mutations, where changes are not visible in any reads (including reads done in the same transaction) until the transaction commits.
 
     def create_order(self, user_id):
         u_id = str(uuid4())
 
         def trans_create_order(transaction):
-            transaction.execute_update(
+            transaction.execute_sql(
                 "INSERT INTO orders (order_id, user_id, paid) "
                 f"VALUES ('{u_id}', '{user_id}', false) "
             )
@@ -155,6 +158,15 @@ class OrderDatabase:
 
     def pay_order(self, order_id):
         def paying(transaction):
+            transaction.begin()
+            finding_query = f"SELECT * FROM orders WHERE order_id = '{order_id}'"
+            order = transaction.execute_sql(finding_query).one_or_none()
+
+            print(order)
+
+            if order is None or order[2] is True:
+                return {"error": "order does not exist or has already been paid"}
+
             orderItemsQuery = "SELECT * FROM orderItems"
 
             query_all_items = f"SELECT * FROM orders AS o " \
@@ -164,34 +176,51 @@ class OrderDatabase:
 
             # For a single consistent read, use snapshot
             # Snapshots do not have an execute update method
+            print('query is \n', query_all_items)
             results: StreamedResultSet = transaction.execute_sql(query_all_items)
 
             if results is None:
                 return {"error": "order does not exist"}
 
             result_list = list(results)
+            print('result list', result_list)
             total_price = sum([float(r[6]) for r in result_list])
+
+            print("total price is", total_price)
 
             # For each item, remove the items from the stock
             # There is a check that the item is in stock!!
-            for r in result_list:
+            for i in range(0, len(result_list)):
+                r = result_list[i]
                 item_id = r[4]
                 quantity = r[5]
-                transaction.execute_sql(
-                    f"UPDATE items SET stock = stock - {quantity} WHERE item_id = '{item_id}'"
+                print('item id is', item_id)
+                print('quantity is', quantity)
+
+                upd = transaction.execute_sql(
+                    f"UPDATE stock SET stock = stock - {quantity} WHERE item_id = '{item_id}'"
                 )
+                print('items removed from stock', upd)
+
+            print('finished removing from stock')
 
             # Remove Credits
             user_id = result_list[0][1]
-            transaction.execute_sql(
-                f"UPDATE users SET credits = credits - {total_price} WHERE user_id = '{user_id}'"
-            )
+            print('user id is', user_id)
+
+            rows_executed = transaction.execute_sql(
+                f"UPDATE users SET credit = credit - {total_price} WHERE user_id = '{user_id}'"
+            ).one_or_none()
+            # This is not printed anymore
+            print("amount of credits removed", rows_executed)
 
             # Mark the order as paid
-            transaction.execute_sql(
+            rows_executed2 = transaction.execute_sql(
                 f"UPDATE orders SET paid = TRUE WHERE order_id = '{order_id}'"
-            )
-            return {"order_id": order_id}
+            ).one_or_none()
+            print("order marked as paid", rows_executed2)
+
+            return {"order_id": order_id, "timestamp": timetamp}
 
         try:
             res = self.database.run_in_transaction(paying)
