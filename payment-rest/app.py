@@ -90,6 +90,26 @@ async def add_funds(user_id: str, amount: float):
     return make_response(jsonify(response), 200)
 
 
+@app.post('/pay/<user_id>/<order_id>/<amount>')
+async def pay(user_id: str, order_id: str, amount: float):
+    destination = f'payment-{str(uuid4())}'
+    waiting[destination] = True
+
+    payload = {'data': {'user_id': user_id,
+                        'order_id': order_id,
+                        'amount': float(amount)},
+               'destination': destination}
+
+    connector.payment_pay(payload)
+
+    response = await get_response(destination)
+
+    if not response['success']:
+        return make_response(jsonify({}), 400)
+
+    return make_response(jsonify({}), 200)
+
+
 @app.get('/status/<user_id>/<order_id>')
 async def status(user_id: str, order_id: str):
     destination = f'payment-{str(uuid4())}'

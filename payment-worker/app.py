@@ -49,6 +49,21 @@ def add_funds(payload, db):
     return response
 
 
+def pay(payload, db):
+    data = payload['data']
+    destination = payload['destination']
+
+    user_id = data['user_id']
+    amount = float(data['amount'])
+
+    data = db. remove_credit_from_use(user_id, amount)
+
+    response = {'data': data,
+                'destination': destination}
+
+    return response
+
+
 def status(payload, db):
     data = payload['data']
     destination = payload['destination']
@@ -72,6 +87,9 @@ def process_message(message, connector, db):
         connector.deliver_response('payment-rest', response)
     if message_type == "find_user":
         response = find_user(payload, db)
+        connector.deliver_response('payment-rest', response)
+    if message_type == "pay":
+        response = pay(payload, db)
         connector.deliver_response('payment-rest', response)
     if message_type == "status":
         response = status(payload, db)

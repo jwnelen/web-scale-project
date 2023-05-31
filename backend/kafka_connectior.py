@@ -44,6 +44,12 @@ class KafkaConnector(Connector):
         self.producer.send('payment-worker', json.dumps(payload).encode('utf-8'))
         self.producer.flush()
 
+    def payment_pay(self, payload):
+        payload['message_type'] = "pay"
+
+        self.producer.send('payment-worker', json.dumps(payload).encode('utf-8'))
+        self.producer.flush()
+
     def payment_status(self, payload):
         payload['message_type'] = "status"
 

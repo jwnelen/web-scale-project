@@ -63,6 +63,32 @@ class SpannerDB:
 
         return data
 
+    def remove_credit_from_user(self, user_id, amount):
+        def update_credit(transaction):
+            # There is a check in the DB that credit cannot be negative
+            current_credit = transaction.execute_sql(
+                f"SELECT credit FROM users WHERE user_id = '{user_id}'"
+            ).one_or_none()
+
+            if current_credit is None:
+                return {'success': False}
+
+            new_credit = float(current_credit[0]) - float(amount)
+            transaction.execute_update(
+                "UPDATE users "
+                f"SET credit = {new_credit} "
+                f"WHERE (user_id) = '{user_id}'",
+            )
+
+            return {'success': True}
+
+        try:
+            data = self.database.run_in_transaction(update_credit)
+        except Exception as e:
+            data = {}
+
+        return data
+
     def get_payment_status(self, order_id):
         with self.database.snapshot() as snapshot:
             result = snapshot.execute_sql(
