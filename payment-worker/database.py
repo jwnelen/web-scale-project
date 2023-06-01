@@ -44,13 +44,11 @@ class SpannerDB:
 
     def add_credit_to_user(self, user_id, amount):
         def update_user(transaction):
-            row_ct = transaction.execute_update(
+            return transaction.execute_update(
                 "UPDATE users "
                 f"SET credit = credit + {amount} "
                 f"WHERE (user_id) = '{user_id}'",
             )
-
-            return row_ct
 
         try:
             row_ct = self.database.run_in_transaction(update_user)

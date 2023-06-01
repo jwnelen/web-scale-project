@@ -37,13 +37,9 @@ spec:
           ports:
             - containerPort: 5002
           env:
-            - name: REDIS_HOST
-              value: order-db
-            - name: REDIS_PORT
-              value: '6379'
-            - name: REDIS_PASSWORD
-              value: "redis"
-            - name: REDIS_DB
-              value: "0"
             - name: BOOTSTRAP_SERVERS
               value: kafka-service:9092
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/tmp/keys/keyfile.json"
+            - name: GCLOUD_PROJECT
+              value: "wdmproject23-v2"

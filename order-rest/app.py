@@ -87,7 +87,7 @@ async def add_item(order_id, item_id):
 
     response = get_response(destination)
 
-    if not response:
+    if not response['success']:
         return make_response(jsonify({}), 400)
 
     return make_response(jsonify(response), 200)

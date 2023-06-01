@@ -46,12 +46,11 @@ class SpannerDB:
 
     def add_stock(self, item_id, amount):
         def update_stock(transaction):
-            row_ct = transaction.execute_update(
+            return transaction.execute_update(
                 "UPDATE stock "
                 f"SET amount = amount + {amount} "
                 f"WHERE (item_id) = '{item_id}'"
             )
-            return row_ct
 
         try:
             row_ct = self.database.run_in_transaction(update_stock)
@@ -70,15 +69,17 @@ class SpannerDB:
                 f"SELECT amount FROM stock WHERE item_id = '{item_id}'"
             ).one_or_none()
 
+            if current_stock is None:
+                return 0
+
             if int(amount) > int(current_stock[0]):
                 return 0
 
-            row_ct = transaction.execute_update(
+            return transaction.execute_update(
                 "UPDATE stock "
                 f"SET amount = amount - {amount} "
                 f"WHERE (item_id) = '{item_id}'"
             )
-            return row_ct
 
         try:
             row_ct = self.database.run_in_transaction(update_stock)
