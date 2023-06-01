@@ -56,7 +56,7 @@ def pay(payload, db):
     user_id = data['user_id']
     amount = float(data['amount'])
 
-    data = db. remove_credit_from_use(user_id, amount)
+    data = db.remove_credit_from_user(user_id, amount)
 
     response = {'data': data,
                 'destination': destination}

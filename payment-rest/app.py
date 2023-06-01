@@ -30,7 +30,7 @@ def retrieve_response():
             waiting.pop(destination)
 
 
-async def get_response(destination):
+def get_response(destination):
     while True:
         if destination in messages:
             response = messages[destination]
@@ -39,7 +39,7 @@ async def get_response(destination):
 
 
 @app.post('/create_user')
-async def create_user():
+def create_user():
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 
@@ -48,13 +48,13 @@ async def create_user():
 
     connector.payment_create_user(payload)
 
-    response = await get_response(destination)
+    response = get_response(destination)
 
     return make_response(jsonify(response), 200)
 
 
 @app.get('/find_user/<user_id>')
-async def find_user(user_id: str):
+def find_user(user_id: str):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 
@@ -63,7 +63,7 @@ async def find_user(user_id: str):
 
     connector.payment_find_user(payload)
 
-    response = await get_response(destination)
+    response = get_response(destination)
 
     if not response:
         return make_response(jsonify({}), 400)
@@ -72,7 +72,7 @@ async def find_user(user_id: str):
 
 
 @app.post('/add_funds/<user_id>/<amount>')
-async def add_funds(user_id: str, amount: float):
+def add_funds(user_id: str, amount: float):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 
@@ -82,7 +82,7 @@ async def add_funds(user_id: str, amount: float):
 
     connector.payment_add_funds(payload)
 
-    response = await get_response(destination)
+    response = get_response(destination)
 
     if not response['done']:
         return make_response(jsonify(response), 400)
@@ -91,7 +91,7 @@ async def add_funds(user_id: str, amount: float):
 
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
-async def pay(user_id: str, order_id: str, amount: float):
+def pay(user_id: str, order_id: str, amount: float):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 
@@ -102,7 +102,7 @@ async def pay(user_id: str, order_id: str, amount: float):
 
     connector.payment_pay(payload)
 
-    response = await get_response(destination)
+    response = get_response(destination)
 
     if not response['success']:
         return make_response(jsonify({}), 400)
@@ -111,7 +111,7 @@ async def pay(user_id: str, order_id: str, amount: float):
 
 
 @app.get('/status/<user_id>/<order_id>')
-async def status(user_id: str, order_id: str):
+def status(user_id: str, order_id: str):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
 
@@ -121,7 +121,7 @@ async def status(user_id: str, order_id: str):
 
     connector.payment_status(payload)
 
-    response = await get_response(destination)
+    response = get_response(destination)
 
     if not response['paid']:
         return make_response(jsonify(response), 400)

@@ -30,7 +30,7 @@ def retrieve_response():
             waiting.pop(destination)
 
 
-async def get_response(destination):
+def get_response(destination):
     while True:
         if destination in messages:
             response = messages[destination]
@@ -39,7 +39,7 @@ async def get_response(destination):
 
 
 @app.post('/item/create/<price>')
-async def item_create(price: float):
+def item_create(price: float):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
@@ -48,7 +48,7 @@ async def item_create(price: float):
 
     connector.stock_item_create(payload)
 
-    response = await get_response(destination)
+    response = get_response(destination)
 
     if not response:
         return make_response(jsonify({}), 400)
@@ -57,7 +57,7 @@ async def item_create(price: float):
 
 
 @app.get('/find/<item_id>')
-async def find(item_id: str):
+def find(item_id: str):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
@@ -66,7 +66,7 @@ async def find(item_id: str):
 
     connector.stock_find(payload)
 
-    response = await get_response(destination)
+    response = get_response(destination)
 
     if not response:
         return make_response(jsonify({}), 400)
@@ -75,7 +75,7 @@ async def find(item_id: str):
 
 
 @app.post('/add/<item_id>/<amount>')
-async def add(item_id: str, amount: int):
+def add(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
@@ -85,7 +85,7 @@ async def add(item_id: str, amount: int):
 
     connector.stock_add(payload)
 
-    response = await get_response(destination)
+    response = get_response(destination)
 
     if not response['success']:
         return make_response(jsonify({}), 400)
@@ -94,7 +94,7 @@ async def add(item_id: str, amount: int):
 
 
 @app.post('/subtract/<item_id>/<amount>')
-async def subtract(item_id: str, amount: int):
+def subtract(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
 
@@ -104,7 +104,7 @@ async def subtract(item_id: str, amount: int):
 
     connector.stock_subtract(payload)
 
-    response = await get_response(destination)
+    response = get_response(destination)
 
     if not response['success']:
         return make_response(jsonify({}), 400)

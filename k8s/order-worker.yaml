@@ -30,8 +30,11 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: "1Gi"
+              memory: "512Mi"
               cpu: "1"
+            requests:
+              memory: "128Mi"
+              cpu: "0.2"
           command: ["python3"]
           args: ["/home/app/src/app.py"]
           ports:

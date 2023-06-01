@@ -33,8 +33,16 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "2"
+            requests:
+              memory: "32Mi"
+              cpu: "2"
           command: ["gunicorn"]
-          args: ["-b", "0.0.0.0:5000", "--timeout", "0", "--chdir", "/home/app/src", "app:start()"]
+          args: ["-b", "0.0.0.0:5000",
+                 "--timeout", "30",
+                 "--workers", "3",
+                 "--threads", "16",
+                 "--chdir", "/home/app/src",
+                 "app:start()"]
           ports:
             - containerPort: 5000
           env:

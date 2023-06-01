@@ -16,11 +16,11 @@ docker-compose build
 docker tag kafka-admin gcr.io/wdmproject23-v2/kafka-admin:latest
 docker push gcr.io/wdmproject23-v2/kafka-admin:latest
 
-#docker tag order-rest gcr.io/wdmproject23-v2/order-rest:latest
-#docker push gcr.io/wdmproject23-v2/order-rest:latest
+docker tag order-rest gcr.io/wdmproject23-v2/order-rest:latest
+docker push gcr.io/wdmproject23-v2/order-rest:latest
 
-#docker tag order-worker gcr.io/wdmproject23-v2/order-worker:latest
-#docker push gcr.io/wdmproject23-v2/order-worker:latest
+docker tag order-worker gcr.io/wdmproject23-v2/order-worker:latest
+docker push gcr.io/wdmproject23-v2/order-worker:latest
 
 docker tag stock-rest gcr.io/wdmproject23-v2/stock-rest:latest
 docker push gcr.io/wdmproject23-v2/stock-rest:latest
@@ -39,7 +39,7 @@ cd k8s
 
 kubectl apply -f zookeeper.yaml
 
-sleep 10
+sleep 15
 
 kubectl apply -f kafka.yaml
 
@@ -49,13 +49,13 @@ kubectl apply -f kafka-admin.yaml
 
 sleep 15
 
-#kubectl apply -f order-worker.yaml
+kubectl apply -f order-worker.yaml
 kubectl apply -f stock-worker.yaml
 kubectl apply -f payment-worker.yaml
 
 sleep 15
 
-#kubectl apply -f order-rest.yaml
+kubectl apply -f order-rest.yaml
 kubectl apply -f stock-rest.yaml
 kubectl apply -f payment-rest.yaml
 

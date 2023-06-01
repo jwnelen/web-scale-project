@@ -39,7 +39,7 @@ def get_response(destination):
 
 
 @app.post('/create/<user_id>')
-async def create(user_id):
+def create(user_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
 
@@ -57,7 +57,7 @@ async def create(user_id):
 
 
 @app.delete('/remove/<order_id>')
-async def remove(order_id):
+def remove(order_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
 
@@ -75,7 +75,7 @@ async def remove(order_id):
 
 
 @app.post('/addItem/<order_id>/<item_id>')
-async def add_item(order_id, item_id):
+def add_item(order_id, item_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
 
@@ -94,7 +94,7 @@ async def add_item(order_id, item_id):
 
 
 @app.delete('/removeItem/<order_id>/<item_id>')
-async def remove_item(order_id, item_id):
+def remove_item(order_id, item_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
 
@@ -113,7 +113,7 @@ async def remove_item(order_id, item_id):
 
 
 @app.get('/find/<order_id>')
-async def find(order_id):
+def find(order_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
 
@@ -131,7 +131,7 @@ async def find(order_id):
 
 
 @app.post('/checkout/<order_id>')
-async def checkout(order_id):
+def checkout(order_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
 
