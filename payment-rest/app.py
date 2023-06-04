@@ -5,6 +5,8 @@ from time import sleep
 
 from uuid import uuid4
 from flask import Flask, jsonify, make_response
+from gevent import monkey
+
 from backend.kafka_connectior import KafkaConnector
 
 connector = None
@@ -15,6 +17,7 @@ waiting = {}
 
 
 def start():
+    monkey.patch_all()
     global connector
     connector = KafkaConnector(os.environ['BOOTSTRAP_SERVERS'], None, 'payment-rest')
     threading.Thread(target=retrieve_response, daemon=True).start()
@@ -51,6 +54,9 @@ def create_user():
     connector.payment_create_user(payload)
 
     response = get_response(destination)
+
+    if not response:
+        return make_response(jsonify({}), 400)
 
     return make_response(jsonify(response), 200)
 

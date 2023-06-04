@@ -23,6 +23,7 @@ class SpannerDB:
         try:
             self.database.run_in_transaction(trans_create_item)
             data = {'item_id': item_id}
+
         except Exception as e:
             data = {}
 

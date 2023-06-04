@@ -1,4 +1,3 @@
-
 import time
 import unittest
 from threading import Thread
@@ -62,6 +61,18 @@ class TestMicroservices(unittest.TestCase):
         stock_after_subtract: int = tu.find_item(item_id)['stock']
         print(stock_after_subtract)
         self.assertEqual(stock_after_subtract, 35)
+
+    def payment_stress(self):
+        start = time.time()
+        for i in range(50):
+            user: dict = tu.create_user()
+            data: dict = tu.find_user(user['user_id'])
+        end = time.time()
+        print(f"DONE {end - start}")
+
+    def test_create_user(self):
+        for i in range(10):
+            Thread(target=self.payment_stress).start()
 
     def test_user(self):
         user: dict = tu.create_user()

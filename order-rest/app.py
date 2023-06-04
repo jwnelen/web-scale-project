@@ -6,6 +6,7 @@ from time import sleep
 from uuid import uuid4
 from flask import Flask, jsonify, make_response
 from backend.kafka_connectior import KafkaConnector
+from gevent import monkey
 
 connector = None
 app = Flask("order-rest-service")
@@ -15,6 +16,7 @@ waiting = {}
 
 
 def start():
+    monkey.patch_all()
     global connector
     connector = KafkaConnector(os.environ['BOOTSTRAP_SERVERS'], None, 'order-rest')
     threading.Thread(target=retrieve_response, daemon=True).start()
@@ -73,7 +75,7 @@ def remove(order_id):
     if not response['success']:
         return make_response(jsonify({}), 400)
 
-    return make_response(jsonify(response), 200)
+    return make_response(jsonify({}), 200)
 
 
 @app.post('/orders/addItem/<order_id>/<item_id>')
@@ -92,7 +94,7 @@ def add_item(order_id, item_id):
     if not response['success']:
         return make_response(jsonify({}), 400)
 
-    return make_response(jsonify(response), 200)
+    return make_response(jsonify({}), 200)
 
 
 @app.delete('/orders/removeItem/<order_id>/<item_id>')
@@ -111,7 +113,7 @@ def remove_item(order_id, item_id):
     if not response['success']:
         return make_response(jsonify({}), 400)
 
-    return make_response(jsonify(response), 200)
+    return make_response(jsonify({}), 200)
 
 
 @app.get('/orders/find/<order_id>')
@@ -145,7 +147,7 @@ def checkout(order_id):
     response = get_response(destination)
 
     if not response['success']:
-        return make_response(jsonify({}), 400)
+        return make_response(jsonify(response), 400)
 
     return make_response(jsonify(response), 200)
 

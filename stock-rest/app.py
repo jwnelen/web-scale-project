@@ -5,6 +5,8 @@ from time import sleep
 
 from uuid import uuid4
 from flask import Flask, jsonify, make_response
+from gevent import monkey
+
 from backend.kafka_connectior import KafkaConnector
 
 connector = None
@@ -15,6 +17,7 @@ waiting = {}
 
 
 def start():
+    monkey.patch_all()
     global connector
     connector = KafkaConnector(os.environ['BOOTSTRAP_SERVERS'], None, 'stock-rest')
     threading.Thread(target=retrieve_response, daemon=True).start()
@@ -92,7 +95,7 @@ def add(item_id: str, amount: int):
     if not response['success']:
         return make_response(jsonify({}), 400)
 
-    return make_response(jsonify(response), 200)
+    return make_response(jsonify({}), 200)
 
 
 @app.post('/stock/subtract/<item_id>/<amount>')
@@ -111,4 +114,4 @@ def subtract(item_id: str, amount: int):
     if not response['success']:
         return make_response(jsonify({}), 400)
 
-    return make_response(jsonify(response), 200)
+    return make_response(jsonify({}), 200)

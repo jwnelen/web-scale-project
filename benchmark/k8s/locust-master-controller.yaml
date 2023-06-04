@@ -31,12 +31,12 @@ spec:
     spec:
       containers:
         - name: locust-master
-          image: gcr.io/wdmproject23-v2/locust
+          image: gcr.io/wdm-benchmark/locust
           env:
             - name: LOCUST_MODE
               value: master
             - name: TARGET_HOST
-              value: http://34.147.8.190/
+              value: http://0.0.0.0/
           ports:
             - name: loc-master-web
               containerPort: 8089

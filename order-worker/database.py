@@ -82,23 +82,23 @@ class SpannerDB:
             return data
 
     def add_item_to_order(self, order_id, item_id):
-        # Check if the order-item pair already exists
-        query = f"SELECT * FROM stock WHERE item_id = '{item_id}'"
 
-        with self.database.snapshot() as snapshot:
-            result = snapshot.execute_sql(query).one_or_none()
+        def adding(transaction):
+            # Check if the order-item pair already exists
+            query = f"SELECT * FROM stock WHERE item_id = '{item_id}'"
+
+            result = transaction.execute_sql(query).one_or_none()
 
             if result is None:
-                return {'success': False}
+                return 0
             else:
                 stock_data = {
                     "stock": int(result[2]),
                     "price": float(result[1])
                 }
 
-        price = stock_data["price"]
+            price = stock_data["price"]
 
-        def adding(transaction):
             finding_query = f"SELECT * FROM orderitems WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
             order_item_combo = transaction.execute_sql(finding_query).one_or_none()
             # Does not exist
@@ -108,52 +108,55 @@ class SpannerDB:
                     f"VALUES ('{order_id}', '{item_id}', 1, {price}) "
                     f"RETURNING *"
                 ).one()
-                return {'success': True}
+                return 1
 
             # Update the current value
             local_res = transaction.execute_sql(
                 f"UPDATE orderitems SET quantity = quantity + 1, "
                 f"total_price = total_price + {price} "
-                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
+                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}' "
                 f"RETURNING order_id, item_id, quantity, total_price"
             ).one_or_none()
 
             if local_res is None:
-                return {'success': False}
+                return 0
 
-
-            return {'success': True}
+            return 1
 
         try:
-            data = self.database.run_in_transaction(adding)
+            status = self.database.run_in_transaction(adding)
+            if status == 1:
+                data = {'success': True}
+            else:
+                data = {'success': False}
         except Exception as e:
             data = {'success': False}
 
         return data
 
     def remove_item_from_order(self, order_id, item_id):
-        # Check if the order-item pair already exists
-        query = f"SELECT * FROM stock WHERE item_id = '{item_id}'"
 
-        with self.database.snapshot() as snapshot:
-            result = snapshot.execute_sql(query).one_or_none()
+        def removing(transaction):
+            # Check if the order-item pair already exists
+            query = f"SELECT * FROM stock WHERE item_id = '{item_id}'"
+
+            result = transaction.execute_sql(query).one_or_none()
 
             if result is None:
-                return {'success': False}
+                return 0
             else:
                 stock_data = {
                     "stock": int(result[2]),
                     "price": float(result[1])
                 }
 
-        price = stock_data["price"]
+            price = stock_data["price"]
 
-        def removing(transaction):
             finding_query = f"SELECT * FROM orderitems WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
             order_item_combo = transaction.execute_sql(finding_query).one_or_none()
             # Does not exist
             if order_item_combo is None:
-                return {'success': False}
+                return 0
 
             # Only one item left, delete the row
             if order_item_combo[2] == 1:
@@ -163,25 +166,29 @@ class SpannerDB:
                 ).one_or_none()
 
                 if local_res is None:
-                    return {'success': False}
+                    return 0
 
-                return {'success': True}
+                return 1
 
             # Update the current value
             rows_executed = transaction.execute_sql(
                 f"UPDATE orderitems SET quantity = quantity - 1, "
                 f"total_price = total_price - {price} "
-                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
+                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}' "
                 f"RETURNING order_id, item_id, quantity, total_price"
             ).one_or_none()
 
             if rows_executed is None:
-                return {'success': False}
+                return 0
 
-            return {'success': True}
+            return 1
 
         try:
-            data = self.database.run_in_transaction(removing)
+            status = self.database.run_in_transaction(removing)
+            if status == 1:
+                data = {'success': True}
+            else:
+                data = {'success': False}
         except Exception as e:
             data = {'success': False}
 
@@ -194,7 +201,7 @@ class SpannerDB:
             order = transaction.execute_sql(finding_query).one_or_none()
 
             if order is None or order[2] is True:
-                return {'success': False}
+                return 0
 
             orderItemsQuery = "SELECT * FROM orderItems"
 
@@ -206,7 +213,7 @@ class SpannerDB:
             results: StreamedResultSet = transaction.execute_sql(query_all_items)
 
             if results is None:
-                return {'success': False}
+                return 0
 
             result_list = list(results)
             total_price = sum([float(r[6]) for r in result_list])
@@ -217,9 +224,9 @@ class SpannerDB:
                 f"SELECT credit FROM users WHERE user_id = '{user_id}'"
             ).one_or_none()
             if res is None:
-                return {'success': False}
+                return 0
             if float(res[0]) < total_price:
-                return {'success': False}
+                return 0
 
             # For each item, remove the items from the stock
             # There is a check that the item is in stock!!
@@ -244,10 +251,14 @@ class SpannerDB:
                 f"UPDATE orders SET paid = TRUE WHERE order_id = '{order_id}'"
             )
 
-            return {'success': True}
+            return 1
 
         try:
-            data = self.database.run_in_transaction(trans_pay_order)
+            status = self.database.run_in_transaction(trans_pay_order)
+            if status == 1:
+                data = {'success': True}
+            else:
+                data = {'success': False}
         except Exception as e:
             data = {'success': False}
 

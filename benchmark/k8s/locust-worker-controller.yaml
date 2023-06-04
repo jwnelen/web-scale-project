@@ -19,7 +19,7 @@ metadata:
   labels:
     name: locust-worker
 spec:
-  replicas: 5
+  replicas: 10
   selector:
     matchLabels:
       app: locust-worker
@@ -30,11 +30,18 @@ spec:
     spec:
       containers:
         - name: locust-worker
-          image: gcr.io/wdmproject23-v2/locust
+          image: gcr.io/wdm-benchmark/locust
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "1"
+            requests:
+              memory: "128Mi"
+              cpu: "1"
           env:
             - name: LOCUST_MODE
               value: worker
             - name: LOCUST_MASTER
               value: locust-master
             - name: TARGET_HOST
-              value: http://34.147.8.190/
+              value: http://0.0.0.0/

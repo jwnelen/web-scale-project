@@ -34,7 +34,7 @@ spec:
               cpu: "1"
             requests:
               memory: "128Mi"
-              cpu: "0.2"
+              cpu: "1"
           command: ["python3"]
           args: ["/home/app/src/app.py"]
           ports:

@@ -69,7 +69,7 @@ class SpannerDB:
             ).one_or_none()
 
             if current_credit is None:
-                return {'success': False}
+                return 0
 
             new_credit = float(current_credit[0]) - float(amount)
             transaction.execute_update(
@@ -78,12 +78,16 @@ class SpannerDB:
                 f"WHERE (user_id) = '{user_id}'",
             )
 
-            return {'success': True}
+            return 1
 
         try:
-            data = self.database.run_in_transaction(update_credit)
+            status = self.database.run_in_transaction(update_credit)
+            if status == 1:
+                data = {'success': True}
+            else:
+                data = {'success': False}
         except Exception as e:
-            data = {}
+            data = {'success': False}
 
         return data
 
