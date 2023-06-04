@@ -1,6 +1,7 @@
 import json
 import os
 import threading
+from time import sleep
 
 from uuid import uuid4
 from flask import Flask, jsonify, make_response
@@ -36,9 +37,10 @@ def get_response(destination):
             response = messages[destination]
             messages.pop(destination)
             return response
+        sleep(0.01)
 
 
-@app.post('/create/<user_id>')
+@app.post('/orders/create/<user_id>')
 def create(user_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
@@ -56,7 +58,7 @@ def create(user_id):
     return make_response(jsonify(response), 200)
 
 
-@app.delete('/remove/<order_id>')
+@app.delete('/orders/remove/<order_id>')
 def remove(order_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
@@ -74,7 +76,7 @@ def remove(order_id):
     return make_response(jsonify(response), 200)
 
 
-@app.post('/addItem/<order_id>/<item_id>')
+@app.post('/orders/addItem/<order_id>/<item_id>')
 def add_item(order_id, item_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
@@ -93,7 +95,7 @@ def add_item(order_id, item_id):
     return make_response(jsonify(response), 200)
 
 
-@app.delete('/removeItem/<order_id>/<item_id>')
+@app.delete('/orders/removeItem/<order_id>/<item_id>')
 def remove_item(order_id, item_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
@@ -112,7 +114,7 @@ def remove_item(order_id, item_id):
     return make_response(jsonify(response), 200)
 
 
-@app.get('/find/<order_id>')
+@app.get('/orders/find/<order_id>')
 def find(order_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True
@@ -130,7 +132,7 @@ def find(order_id):
     return make_response(jsonify(response), 200)
 
 
-@app.post('/checkout/<order_id>')
+@app.post('/orders/checkout/<order_id>')
 def checkout(order_id):
     destination = f'order-{str(uuid4())}'
     waiting[destination] = True

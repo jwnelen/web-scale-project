@@ -1,6 +1,7 @@
 import json
 import os
 import threading
+from time import sleep
 
 from uuid import uuid4
 from flask import Flask, jsonify, make_response
@@ -36,9 +37,10 @@ def get_response(destination):
             response = messages[destination]
             messages.pop(destination)
             return response
+        sleep(0.01)
 
 
-@app.post('/create_user')
+@app.post('/payment/create_user')
 def create_user():
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
@@ -53,7 +55,7 @@ def create_user():
     return make_response(jsonify(response), 200)
 
 
-@app.get('/find_user/<user_id>')
+@app.get('/payment/find_user/<user_id>')
 def find_user(user_id: str):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
@@ -71,7 +73,7 @@ def find_user(user_id: str):
     return make_response(jsonify(response), 200)
 
 
-@app.post('/add_funds/<user_id>/<amount>')
+@app.post('/payment/add_funds/<user_id>/<amount>')
 def add_funds(user_id: str, amount: float):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
@@ -90,7 +92,7 @@ def add_funds(user_id: str, amount: float):
     return make_response(jsonify(response), 200)
 
 
-@app.post('/pay/<user_id>/<order_id>/<amount>')
+@app.post('/payment/pay/<user_id>/<order_id>/<amount>')
 def pay(user_id: str, order_id: str, amount: float):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True
@@ -110,7 +112,7 @@ def pay(user_id: str, order_id: str, amount: float):
     return make_response(jsonify({}), 200)
 
 
-@app.get('/status/<user_id>/<order_id>')
+@app.get('/payment/status/<user_id>/<order_id>')
 def status(user_id: str, order_id: str):
     destination = f'payment-{str(uuid4())}'
     waiting[destination] = True

@@ -1,6 +1,7 @@
 import json
 import os
 import threading
+from time import sleep
 
 from uuid import uuid4
 from flask import Flask, jsonify, make_response
@@ -36,9 +37,10 @@ def get_response(destination):
             response = messages[destination]
             messages.pop(destination)
             return response
+        sleep(0.01)
 
 
-@app.post('/item/create/<price>')
+@app.post('/stock/item/create/<price>')
 def item_create(price: float):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
@@ -56,7 +58,7 @@ def item_create(price: float):
     return make_response(jsonify(response), 200)
 
 
-@app.get('/find/<item_id>')
+@app.get('/stock/find/<item_id>')
 def find(item_id: str):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
@@ -74,7 +76,7 @@ def find(item_id: str):
     return make_response(jsonify(response), 200)
 
 
-@app.post('/add/<item_id>/<amount>')
+@app.post('/stock/add/<item_id>/<amount>')
 def add(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True
@@ -93,7 +95,7 @@ def add(item_id: str, amount: int):
     return make_response(jsonify(response), 200)
 
 
-@app.post('/subtract/<item_id>/<amount>')
+@app.post('/stock/subtract/<item_id>/<amount>')
 def subtract(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
     waiting[destination] = True

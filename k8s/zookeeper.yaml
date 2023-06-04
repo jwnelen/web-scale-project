@@ -36,5 +36,12 @@ spec:
         - image: wurstmeister/zookeeper
           imagePullPolicy: IfNotPresent
           name: zookeeper
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1"
+            requests:
+              memory: "1Gi"
+              cpu: "0.2"
           ports:
             - containerPort: 2181
