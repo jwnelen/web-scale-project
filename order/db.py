@@ -25,18 +25,19 @@ class OrderDatabase:
     def create_order(self, user_id):
         u_id = str(uuid4())
 
-        def trans_create_order(transaction):
-            transaction.execute_update(
-                "INSERT INTO orders (order_id, user_id, paid) "
-                f"VALUES ('{u_id}', '{user_id}', false) "
-            )
-
+        # This is using Mutations
         try:
-            self.database.run_in_transaction(trans_create_order)
+            with self.database.batch() as batch:
+                batch.insert(
+                    table="orders",
+                    columns=("order_id", "user_id", "paid"),
+                    values=[(u_id, user_id, False)],
+                )
+                data = {"order_id": u_id}
         except Exception as e:
-            return {"error": str(e)}
+            data = {}
 
-        return {"order_id": u_id}
+        return data
 
     def remove_order(self, order_id):
         def trans_remove_order(transaction):
@@ -45,10 +46,15 @@ class OrderDatabase:
             )
 
         try:
-            r = self.database.run_in_transaction(trans_remove_order)
+            row_ct = self.database.run_in_transaction(trans_remove_order)
+            if row_ct == 1:
+                data = {'success': True}
+            else:
+                data = {'success': False}
         except Exception as e:
-            return {"error": str(e)}
-        return {"rows_affected": r}
+            data = {'success': False}
+
+        return data
 
     def find_order(self, order_id):
         orderItemsQuery = "SELECT * FROM orderItems"
@@ -64,24 +70,26 @@ class OrderDatabase:
             results: StreamedResultSet = snapshot.execute_sql(new_query)
 
             if results is None:
-                return {"error": "order does not exist"}
+                data = {}
+            else:
+                items = []
+                total_price = 0
+                result_list = list(results)
+                f = result_list[0]
 
-            items = []
-            total_price = 0
-            result_list = list(results)
-            f = result_list[0]
+                for r in result_list:
+                    items.append(r[4])
+                    total_price += r[6]
 
-            for r in result_list:
-                items.append(r[4])
-                total_price += r[6]
+                data = {
+                    "order_id": f[0],
+                    "user_id": f[1],
+                    "paid": f[2],
+                    "items": items,
+                    "total_price": total_price
+                }
 
-            return {
-                "order_id": f[0],
-                "user_id": f[1],
-                "paid": f[2],
-                "items": items,
-                "total_price": total_price
-            }
+            return data
 
     def add_item_to_order(self, order_id, item_id, price):
         # Check if the order-item pair already exists
@@ -96,25 +104,31 @@ class OrderDatabase:
                     f"VALUES ('{order_id}', '{item_id}', 1, {price}) "
                     f"RETURNING *"
                 ).one()
-                return {"order_id": local_res[0], "item_id": local_res[1],
-                        "quantity": local_res[2], "price": local_res[3]}
+                return 1
 
             # Update the current value
             local_res = transaction.execute_sql(
                 f"UPDATE orderitems SET quantity = quantity + 1, "
                 f"total_price = total_price + {price} "
-                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
+                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}' "
                 f"RETURNING order_id, item_id, quantity, total_price"
             ).one_or_none()
 
-            return {"order_id": local_res[0], "item_id": local_res[1],
-                    "quantity": local_res[2], "price": local_res[3]}
+            if local_res is None:
+                return 0
+
+            return 1
 
         try:
-            res = self.database.run_in_transaction(adding)
+            status = self.database.run_in_transaction(adding)
+            if status == 1:
+                data = {'success': True}
+            else:
+                data = {'success': False}
         except Exception as e:
-            return {"error": str(e)}
-        return res
+            data = {'success': False}
+
+        return data
 
     def remove_item_from_order(self, order_id, item_id, price):
         def removing(transaction):
@@ -122,7 +136,7 @@ class OrderDatabase:
             order_item_combo = transaction.execute_sql(finding_query).one_or_none()
             # Does not exist
             if order_item_combo is None:
-                return {"error": "order_id and item_id does not exist"}
+                return 0
 
             # Only one item left, delete the row
             if order_item_combo[2] == 1:
@@ -132,35 +146,47 @@ class OrderDatabase:
                 ).one_or_none()
 
                 if local_res is None:
-                    return {"error": "order_id and item_id does not exist"}
+                    return 0
 
-                return {"order_id": order_id, "item_id": item_id, "price": 0, "quantity": 0}
+                return 1
 
             # Update the current value
-            local_res = transaction.execute_sql(
+            rows_executed = transaction.execute_sql(
                 f"UPDATE orderitems SET quantity = quantity - 1, "
                 f"total_price = total_price - {price} "
-                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}'"
+                f"WHERE order_id = '{order_id}' AND item_id = '{item_id}' "
                 f"RETURNING order_id, item_id, quantity, total_price"
             ).one_or_none()
 
-            return {"order_id": local_res[0], "item_id": local_res[1],
-                    "quantity": local_res[2], "price": local_res[3]}
+            if rows_executed is None:
+                return 0
+
+            return 1
 
         try:
-            res = self.database.run_in_transaction(removing)
+            status = self.database.run_in_transaction(removing)
+            if status == 1:
+                data = {'success': True}
+            else:
+                data = {'success': False}
         except Exception as e:
-            return {"error": str(e)}
-        return res
+            data = {'success': False}
+
+        return data
 
     def pay_order(self, order_id):
-        def trans_pay_order(transaction):
-
+        # First check if everything is in stock and if the order exists
+        # We need multi-use to read multiple sql statements
+        with self.database.snapshot(multi_use=True) as snapshot:
+            print("Snapshot created")
+            # Check order
             finding_query = f"SELECT * FROM orders WHERE order_id = '{order_id}'"
-            order = transaction.execute_sql(finding_query).one_or_none()
-
+            order = snapshot.execute_sql(finding_query).one_or_none()
             if order is None or order[2] is True:
-                return {"error": "order does not exist or has already been paid"}
+                print("Order does not exist or is already paid")
+                return {'success': False}
+
+            user_id = order[1]
 
             orderItemsQuery = "SELECT * FROM orderItems"
 
@@ -169,65 +195,61 @@ class OrderDatabase:
                               f"ON o.order_id = oi.order_id " \
                               f"WHERE o.order_id = '{order_id}'"
 
-            results: StreamedResultSet = transaction.execute_sql(query_all_items)
 
-            if results is None:
-                return {"error": "order does not exist"}
-
+            results: StreamedResultSet = snapshot.execute_sql(query_all_items)
             result_list = list(results)
-            print('result list', result_list)
             total_price = sum([float(r[6]) for r in result_list])
-            print("total price is", total_price)
 
             # Check if the user has enough credit
-            user_id = result_list[0][1]
-            res = transaction.execute_sql(
-                f"SELECT credit FROM users WHERE user_id = '{user_id}'"
+            res = snapshot.execute_sql(
+                f"SELECT credit FROM users WHERE user_id = '{user_id}' "
             ).one_or_none()
-            if res is None:
-                return {"error": "user does not exist"}
-            if float(res[0]) < total_price:
-                return {"error": "user does not have enough credit"}
 
+            print(res)
+
+            if res is None:
+                print("User does not exist")
+                return {'success': False}
+            if float(res[0]) < total_price:
+                print("User does not have enough credit", res[0], total_price)
+                return {'success': False}
+
+        def transaction_pay_order(transaction):
+            print("Transaction started")
             # For each item, remove the items from the stock
             # There is a check that the item is in stock!!
-
             for i in range(0, len(result_list)):
                 r = result_list[i]
                 item_id = r[4]
                 quantity = r[5]
-                print('item id is', item_id)
-                print('quantity is', quantity)
 
                 upd = transaction.execute_update(
                     f"UPDATE stock SET amount = amount - {quantity} WHERE item_id = '{item_id}' "
                 )
 
-                print('items removed from stock', upd)
-
-            print('finished removing from stock')
-
             # Remove Credits
             user_id = result_list[0][1]
-            print('user id is', user_id)
 
             rows_executed = transaction.execute_update(
                 f"UPDATE users SET credit = credit - {total_price} WHERE user_id = '{user_id}' "
             )
 
-            # This is not printed anymore
-            print("amount of credits removed ", rows_executed)
-
             # Mark the order as paid - COMMIT
             rows_executed2 = transaction.execute_update(
                 f"UPDATE orders SET paid = TRUE WHERE order_id = '{order_id}'"
             )
+            if rows_executed != 1 or rows_executed2 != 1:
+                return 0
 
-            print("order marked as paid", rows_executed2)
-
-            return {"order_id": order_id}
+            return 1
 
         try:
-            return self.database.run_in_transaction(trans_pay_order)
+            status = self.database.run_in_transaction(transaction_pay_order)
+            if status == 1:
+                data = {'success': True}
+            else:
+                data = {'success': False}
         except Exception as e:
-            return {"error": str(e)}
+            data = {'success': False}
+
+        return data

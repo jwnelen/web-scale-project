@@ -42,12 +42,9 @@ app = Flask("order-service")
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
-    # This is not needed anymore, because the constaints will take care of this
-    # user_data = connector.payment_find_user(user_id)
-
     result = spanner_db.create_order(user_id)
 
-    if "error" in result:
+    if "order_id" not in result:
         return result, 400
 
     return result, 200
@@ -57,7 +54,8 @@ def create_order(user_id):
 def remove_order(order_id):
     result = spanner_db.remove_order(order_id)
 
-    if "error" in result:
+    # First check if the key exists
+    if "success" not in result or result['success'] is False:
         return result, 400
 
     return result, 200
@@ -70,7 +68,8 @@ def response_add_item(order_id, item_id):
         return {"error": "Could not find item"}, 400
 
     result = spanner_db.add_item_to_order(order_id, item_id, data['price'])
-    if "error" in result:
+
+    if "success" not in result or result['success'] is False:
         return result, 400
 
     return result, 200
@@ -79,11 +78,12 @@ def response_add_item(order_id, item_id):
 @app.delete('/removeItem/<order_id>/<item_id>')
 def response_remove_item(order_id, item_id):
     data = connector.stock_find(item_id)
-    if not data:
+    if not data or "error" in data:
         return {"error": "Could not find item"}, 404
 
     result = spanner_db.remove_item_from_order(order_id, item_id, data['price'])
-    if "error" in result:
+
+    if "success" not in result or result['success'] is False:
         return result, 400
 
     return result, 200
@@ -92,7 +92,7 @@ def response_remove_item(order_id, item_id):
 @app.get('/find/<order_id>')
 def find_order(order_id):
     result = spanner_db.find_order(order_id)
-    if "error" in result:
+    if result is {}:
         return result, 400
 
     return result, 200
@@ -102,7 +102,9 @@ def find_order(order_id):
 def checkout(order_id):
     result = spanner_db.pay_order(order_id)
     print("PAY ORDER RESULT", result)
-    if "error" in result:
-        return {"succeeded": False}, 400
+
+    if not result['success']:
+        return result, 400
 
     return result, 200
+

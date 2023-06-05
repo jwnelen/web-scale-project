@@ -18,17 +18,30 @@ class StockDatabase:
     def create_item(self, price):
         item_id = str(uuid4())
 
-        def trans_create_item(transaction):
-            transaction.execute_update(
-                "INSERT INTO stock (item_id, price, amount) "
-                f"VALUES ('{item_id}', {price}, 0) "
-            )
-
+        # This is using Mutations
         try:
-            self.database.run_in_transaction(trans_create_item)
+            with self.database.batch() as batch:
+                batch.insert(
+                    table="stock",
+                    columns=("item_id", "price", "amount"),
+                    values=[(item_id, price, 0)],
+                )
         except Exception as e:
             return {"error": str(e)}
+
         return {"item_id": item_id}
+
+        # def trans_create_item(transaction):
+        #     transaction.execute_update(
+        #         "INSERT INTO stock (item_id, price, amount) "
+        #         f"VALUES ('{item_id}', {price}, 0) "
+        #     )
+        #
+        # try:
+        #     self.database.run_in_transaction(trans_create_item)
+        # except Exception as e:
+        #     return {"error": str(e)}
+        # return {"item_id": item_id}
 
     def find_item(self, item_id):
         query = f"SELECT * FROM stock WHERE item_id = '{item_id}'"
@@ -51,13 +64,13 @@ class StockDatabase:
                 f"WHERE (item_id) = '{item_id}'"
             )
 
-            return {"amount_rows_affected": row_ct}
+            return row_ct
 
         try:
             res = self.database.run_in_transaction(update_stock)
         except Exception as e:
             return {"error": str(e)}
-        return res
+        return {"rows_updated": res}
 
     def remove_stock(self, item_id, amount):
         def update_stock(transaction):

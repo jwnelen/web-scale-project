@@ -46,28 +46,18 @@ class UserDatabase:
             }
 
     def add_credit_to_user(self, user_id, amount):
-        def update_user(transaction):
+        # For the adding, we don't need to check amounts and stuff.
+        f = float(amount)
+        rows_aff = self.database.execute_partitioned_dml(
+            "UPDATE users "
+            f"SET credit = credit + {f} "
+            f"WHERE user_id = '{user_id}' "
+        )
 
-            current_credit = transaction.execute_sql(
-                f"SELECT credit FROM users WHERE user_id = '{user_id}'"
-            ).one_or_none()
+        if rows_aff != 1:
+            return {"error": "user_id does not exist"}
 
-            if current_credit is None:
-                return {"error": "user_id does not exist"}
-
-            new_credit = float(current_credit[0]) + float(amount)
-            rows_aff = transaction.execute_update(
-                "UPDATE users "
-                f"SET credit = {new_credit} "
-                f"WHERE (user_id) = '{user_id}'",
-            )
-
-            return {"done": True, "amount_rows_affected": rows_aff}
-
-        try:
-            return self.database.run_in_transaction(update_user)
-        except Exception as e:
-            return {"error": str(e)}
+        return {"done": True, "amount_rows_affected": rows_aff}
 
     def remove_credit_from_user(self, user_id, amount):
         def update_credit(transaction):
@@ -80,13 +70,16 @@ class UserDatabase:
                 return {"error": "user_id does not exist"}
 
             new_credit = float(current_credit[0]) - float(amount)
-            rows_aff = transaction.execute_update(
+            rows_aff = transaction.execute_partitioned_dml(
                 "UPDATE users "
                 f"SET credit = {new_credit} "
                 f"WHERE (user_id) = '{user_id}'",
             )
 
-            return {"done": True, "amount_rows_affected": rows_aff}
+            if rows_aff != 1:
+                return {"error": "user_id does not exist"}
+
+            return {"done": True}
 
         try:
             return self.database.run_in_transaction(update_credit)
