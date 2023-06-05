@@ -187,25 +187,25 @@ class OrderDatabase:
                 return {'success': False}
 
             user_id = order[1]
+            # orderItemsQuery = "SELECT * FROM orderItems"
 
-            orderItemsQuery = "SELECT * FROM orderItems"
+            # query_all_items = f"SELECT * FROM orders AS o " \
+            #                   f"LEFT JOIN ({orderItemsQuery}) AS oi " \
+            #                   f"ON o.order_id = oi.order_id " \
+            #                   f"WHERE o.order_id = '{order_id}'"
 
-            query_all_items = f"SELECT * FROM orders AS o " \
-                              f"LEFT JOIN ({orderItemsQuery}) AS oi " \
-                              f"ON o.order_id = oi.order_id " \
-                              f"WHERE o.order_id = '{order_id}'"
-
+            # Newly created VIEW
+            query_all_items = f"SELECT * FROM orderswithitems where order_id = '{order_id}'"
 
             results: StreamedResultSet = snapshot.execute_sql(query_all_items)
+
             result_list = list(results)
-            total_price = sum([float(r[6]) for r in result_list])
+            total_price = sum([float(r[4]) for r in result_list])
 
             # Check if the user has enough credit
             res = snapshot.execute_sql(
                 f"SELECT credit FROM users WHERE user_id = '{user_id}' "
             ).one_or_none()
-
-            print(res)
 
             if res is None:
                 print("User does not exist")
@@ -214,24 +214,41 @@ class OrderDatabase:
                 print("User does not have enough credit", res[0], total_price)
                 return {'success': False}
 
+            # Check if all items are in stock
+            for i in range(0, len(result_list)):
+                r = result_list[i]
+                item_id_ = r[3]
+                quantity_ = r[5]
+
+                res = snapshot.execute_sql(
+                    f"SELECT amount FROM stock WHERE item_id = '{item_id_}' "
+                ).one_or_none()
+
+                if res is None:
+                    print("Item does not exist")
+                    return {'success': False}
+                if int(res[0]) < quantity_:
+                    print("Item does not have enough stock", res[0], quantity_)
+                    return {'success': False}
+
         def transaction_pay_order(transaction):
             print("Transaction started")
             # For each item, remove the items from the stock
-            # There is a check that the item is in stock!!
-            for i in range(0, len(result_list)):
-                r = result_list[i]
-                item_id = r[4]
+
+            print(result_list)
+
+            for indx in range(0, len(result_list)):
+                r = result_list[indx]
+                item_id = r[3]
                 quantity = r[5]
 
                 upd = transaction.execute_update(
-                    f"UPDATE stock SET amount = amount - {quantity} WHERE item_id = '{item_id}' "
+                    f"UPDATE stock SET amount = amount - {quantity} WHERE item_id = '{item_id}'"
                 )
 
             # Remove Credits
-            user_id = result_list[0][1]
-
             rows_executed = transaction.execute_update(
-                f"UPDATE users SET credit = credit - {total_price} WHERE user_id = '{user_id}' "
+                f"UPDATE users SET credit = credit - {total_price} WHERE user_id = '{user_id}'"
             )
 
             # Mark the order as paid - COMMIT
