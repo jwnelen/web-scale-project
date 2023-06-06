@@ -6,4 +6,3 @@ metadata:
     app: myapplication
 data:
   GCLOUD_PROJECT: "wdmproject23-v2"
-

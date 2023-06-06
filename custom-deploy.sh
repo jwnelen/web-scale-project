@@ -16,23 +16,23 @@ docker-compose build
 docker tag kafka-admin gcr.io/"$PROJECT_ID"/kafka-admin
 docker push gcr.io/"$PROJECT_ID"/kafka-admin
 
-docker tag order-rest2 gcr.io/"$PROJECT_ID"/order-rest2
-docker push gcr.io/"$PROJECT_ID"/order-rest2
+docker tag order-rest-final gcr.io/"$PROJECT_ID"/order-rest-final
+docker push gcr.io/"$PROJECT_ID"/order-rest-final
 
-docker tag order-worker2 gcr.io/"$PROJECT_ID"/order-worker2
-docker push gcr.io/"$PROJECT_ID"/order-worker2
+docker tag order-worker-final gcr.io/"$PROJECT_ID"/order-worker-final
+docker push gcr.io/"$PROJECT_ID"/order-worker-final
 
-docker tag stock-rest2 gcr.io/"$PROJECT_ID"/stock-rest2
-docker push gcr.io/"$PROJECT_ID"/stock-rest2
+docker tag stock-rest-final gcr.io/"$PROJECT_ID"/stock-rest-final
+docker push gcr.io/"$PROJECT_ID"/stock-rest-final
 
-docker tag stock-worker2 gcr.io/"$PROJECT_ID"/stock-worker2
-docker push gcr.io/"$PROJECT_ID"/stock-worker2
+docker tag stock-worker-final gcr.io/"$PROJECT_ID"/stock-worker-final
+docker push gcr.io/"$PROJECT_ID"/stock-worker-final
 
-docker tag payment-rest3 gcr.io/"$PROJECT_ID"/payment-rest3
-docker push gcr.io/"$PROJECT_ID"/payment-rest3
+docker tag payment-rest-final gcr.io/"$PROJECT_ID"/payment-rest-final
+docker push gcr.io/"$PROJECT_ID"/payment-rest-final
 
-docker tag payment-worker2 gcr.io/"$PROJECT_ID"/payment-worker2
-docker push gcr.io/"$PROJECT_ID"/payment-worker2
+docker tag payment-worker-final gcr.io/"$PROJECT_ID"/payment-worker-final
+docker push gcr.io/"$PROJECT_ID"/payment-worker-final
 
 
 cd k8s

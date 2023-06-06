@@ -16,23 +16,23 @@ docker-compose build
 docker tag kafka-admin gcr.io/wdmproject23-v2/kafka-admin:latest
 docker push gcr.io/wdmproject23-v2/kafka-admin:latest
 
-docker tag order-rest2 gcr.io/wdmproject23-v2/order-rest2
-docker push gcr.io/wdmproject23-v2/order-rest2
+docker tag order-rest-final gcr.io/wdmproject23-v2/order-rest-final
+docker push gcr.io/wdmproject23-v2/order-rest-final
 
-docker tag order-worker2 gcr.io/wdmproject23-v2/order-worker2
-docker push gcr.io/wdmproject23-v2/order-worker2
+docker tag order-worker-final gcr.io/wdmproject23-v2/order-worker-final
+docker push gcr.io/wdmproject23-v2/order-worker-final
 
-docker tag stock-rest2 gcr.io/wdmproject23-v2/stock-rest2
-docker push gcr.io/wdmproject23-v2/stock-rest2
+docker tag stock-rest-final gcr.io/wdmproject23-v2/stock-rest-final
+docker push gcr.io/wdmproject23-v2/stock-rest-final
 
-docker tag stock-worker2 gcr.io/wdmproject23-v2/stock-worker2
-docker push gcr.io/wdmproject23-v2/stock-worker2
+docker tag stock-worker-final gcr.io/wdmproject23-v2/stock-worker-final
+docker push gcr.io/wdmproject23-v2/stock-worker-final
 
-docker tag payment-rest3 gcr.io/wdmproject23-v2/payment-rest3
-docker push gcr.io/wdmproject23-v2/payment-rest3
+docker tag payment-rest-final gcr.io/wdmproject23-v2/payment-rest-final
+docker push gcr.io/wdmproject23-v2/payment-rest-final
 
-docker tag payment-worker2 gcr.io/wdmproject23-v2/payment-worker2
-docker push gcr.io/wdmproject23-v2/payment-worker2
+docker tag payment-worker-final gcr.io/wdmproject23-v2/payment-worker-final
+docker push gcr.io/wdmproject23-v2/payment-worker-final
 
 
 cd k8s

@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: stock-worker
-          image: gcr.io/wdmproject23-v2/stock-worker2
+          image: gcr.io/wdmproject23-v2/stock-worker-final
           imagePullPolicy: IfNotPresent
           resources:
             limits:
