@@ -28,8 +28,8 @@ docker push gcr.io/wdmproject23-v2/stock-rest2
 docker tag stock-worker2 gcr.io/wdmproject23-v2/stock-worker2
 docker push gcr.io/wdmproject23-v2/stock-worker2
 
-docker tag payment-rest2 gcr.io/wdmproject23-v2/payment-rest2
-docker push gcr.io/wdmproject23-v2/payment-rest2
+docker tag payment-rest3 gcr.io/wdmproject23-v2/payment-rest3
+docker push gcr.io/wdmproject23-v2/payment-rest3
 
 docker tag payment-worker2 gcr.io/wdmproject23-v2/payment-worker2
 docker push gcr.io/wdmproject23-v2/payment-worker2

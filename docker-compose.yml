@@ -29,7 +29,7 @@ services:
     build:
       context: ./
       dockerfile: ./payment-rest/Dockerfile
-    image: payment-rest2:latest
+    image: payment-rest3:latest
 
   payment-worker-service:
     build:

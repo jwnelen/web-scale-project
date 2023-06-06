@@ -6,7 +6,6 @@ from uuid import uuid4
 from aiokafka import AIOKafkaConsumer
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-
 from backend.kafka_rest_connectior import KafkaRESTConnector
 
 app = FastAPI()
