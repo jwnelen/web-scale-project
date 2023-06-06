@@ -5,13 +5,13 @@ services:
     build:
       context: ./
       dockerfile: ./order-rest/Dockerfile
-    image: order-rest:latest
+    image: order-rest2:latest
 
   order-worker-service:
     build:
       context: ./
       dockerfile: ./order-worker/Dockerfile
-    image: order-worker:latest
+    image: order-worker2:latest
 
   stock-rest-service:
     build:
@@ -29,13 +29,13 @@ services:
     build:
       context: ./
       dockerfile: ./payment-rest/Dockerfile
-    image: payment-rest:latest
+    image: payment-rest2:latest
 
   payment-worker-service:
     build:
       context: ./
       dockerfile: ./payment-worker/Dockerfile
-    image: payment-worker:latest
+    image: payment-worker2:latest
 
   kafka-admin-service:
     build:
