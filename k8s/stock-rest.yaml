@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: stock-rest
-          image: gcr.io/wdmproject23-v2/stock-rest2
+          image: gcr.io/wdmproject23-v2/stock-rest-sql
           imagePullPolicy: IfNotPresent
           resources:
             limits:

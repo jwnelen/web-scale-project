@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: payment-rest
-          image: gcr.io/wdmproject23-v2/payment-rest3
+          image: gcr.io/wdmproject23-v2/payment-rest-sql
           imagePullPolicy: IfNotPresent
           resources:
             limits:
