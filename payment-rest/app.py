@@ -1,137 +1,120 @@
 import json
 import os
-import threading
-from time import sleep
+import random
 
 from uuid import uuid4
-from flask import Flask, jsonify, make_response
-from gevent import monkey
-
+from aiokafka import AIOKafkaConsumer
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from backend.kafka_rest_connectior import KafkaRESTConnector
 
-connector = None
-app = Flask("payment-rest-service")
-
-messages = {}
-waiting = {}
+app = FastAPI()
 
 
-def start():
-    monkey.patch_all()
-    global connector
-    connector = KafkaConnector(os.environ['BOOTSTRAP_SERVERS'], None, 'payment-rest')
-    threading.Thread(target=retrieve_response, daemon=True).start()
-    return app
+async def get_response(destination, send_func, payload):
+    consumer = AIOKafkaConsumer(
+        'payment-rest',
+        bootstrap_servers=os.environ['BOOTSTRAP_SERVERS'],
+        group_id=str(random.randint(1, 10000000)))
 
+    await consumer.start()
+    await send_func(payload)
+    try:
+        async for message in consumer:
+            payload = json.loads(message.value.decode('utf-8'))
+            msg_destination = payload['destination']
 
-def retrieve_response():
-    for message in connector.consumer:
-        payload = json.loads(message.value.decode('utf-8'))
-        destination = payload['destination']
-
-        if destination in waiting:
-            messages[destination] = payload['data']
-            waiting.pop(destination)
-
-
-def get_response(destination):
-    while True:
-        if destination in messages:
-            response = messages[destination]
-            messages.pop(destination)
-            return response
-        sleep(0.01)
+            if msg_destination == destination:
+                response = payload['data']
+                return response
+    finally:
+        await consumer.stop()
 
 
 @app.post('/payment/create_user')
-def create_user():
+async def create_user():
     destination = f'payment-{str(uuid4())}'
-    waiting[destination] = True
 
     payload = {'data': {},
                'destination': destination}
 
-    connector.payment_create_user(payload)
+    connector = KafkaRESTConnector()
 
-    response = get_response(destination)
+    response = await get_response(destination, connector.payment_create_user, payload)
 
     if not response:
-        return make_response(jsonify({}), 400)
+        return JSONResponse(content={}, status_code=400)
 
-    return make_response(jsonify(response), 200)
+    return JSONResponse(content=response, status_code=200)
 
 
-@app.get('/payment/find_user/<user_id>')
-def find_user(user_id: str):
+@app.get('/payment/find_user/{user_id}')
+async def find_user(user_id: str):
     destination = f'payment-{str(uuid4())}'
-    waiting[destination] = True
 
     payload = {'data': {'user_id': user_id},
                'destination': destination}
 
-    connector.payment_find_user(payload)
+    connector = KafkaRESTConnector()
 
-    response = get_response(destination)
+    response = await get_response(destination, connector.payment_find_user, payload)
 
     if not response:
-        return make_response(jsonify({}), 400)
+        return JSONResponse(content={}, status_code=400)
 
-    return make_response(jsonify(response), 200)
+    return JSONResponse(content=response, status_code=200)
 
 
-@app.post('/payment/add_funds/<user_id>/<amount>')
-def add_funds(user_id: str, amount: float):
+@app.post('/payment/add_funds/{user_id}/{amount}')
+async def add_funds(user_id: str, amount: float):
     destination = f'payment-{str(uuid4())}'
-    waiting[destination] = True
 
     payload = {'data': {'user_id': user_id,
                         'amount': float(amount)},
                'destination': destination}
 
-    connector.payment_add_funds(payload)
+    connector = KafkaRESTConnector()
 
-    response = get_response(destination)
+    response = await get_response(destination, connector.payment_add_funds, payload)
 
     if not response['done']:
-        return make_response(jsonify(response), 400)
+        return JSONResponse(content=response, status_code=400)
 
-    return make_response(jsonify(response), 200)
+    return JSONResponse(content=response, status_code=200)
 
 
-@app.post('/payment/pay/<user_id>/<order_id>/<amount>')
-def pay(user_id: str, order_id: str, amount: float):
+@app.post('/payment/pay/{user_id}/{order_id}/{amount}')
+async def pay(user_id: str, order_id: str, amount: float):
     destination = f'payment-{str(uuid4())}'
-    waiting[destination] = True
 
     payload = {'data': {'user_id': user_id,
                         'order_id': order_id,
                         'amount': float(amount)},
                'destination': destination}
 
-    connector.payment_pay(payload)
+    connector = KafkaRESTConnector()
 
-    response = get_response(destination)
+    response = await get_response(destination, connector.payment_pay, payload)
 
     if not response['success']:
-        return make_response(jsonify({}), 400)
+        return JSONResponse(content={}, status_code=400)
 
-    return make_response(jsonify({}), 200)
+    return JSONResponse(content={}, status_code=200)
 
 
-@app.get('/payment/status/<user_id>/<order_id>')
-def status(user_id: str, order_id: str):
+@app.get('/payment/status/{user_id}/{order_id}')
+async def status(user_id: str, order_id: str):
     destination = f'payment-{str(uuid4())}'
-    waiting[destination] = True
 
     payload = {'data': {'user_id': user_id,
                         'order_id': order_id},
                'destination': destination}
 
-    connector.payment_status(payload)
+    connector = KafkaRESTConnector()
 
-    response = get_response(destination)
+    response = await get_response(destination, connector.payment_status, payload)
 
     if not response['paid']:
-        return make_response(jsonify(response), 400)
+        return JSONResponse(content=response, status_code=400)
 
-    return make_response(jsonify(response), 200)
+    return JSONResponse(content=response, status_code=200)

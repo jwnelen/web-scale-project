@@ -2,4 +2,3 @@ requests
 aiokafka
 uvicorn[standard]
 fastapi
-gunicorn

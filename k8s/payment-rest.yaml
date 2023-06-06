@@ -16,7 +16,7 @@ kind: Deployment
 metadata:
   name: payment-rest-deployment
 spec:
-  replicas: 1
+  replicas: 5
   selector:
     matchLabels:
       component: payment-rest
@@ -27,15 +27,15 @@ spec:
     spec:
       containers:
         - name: payment-rest
-          image: gcr.io/wdmproject23-v2/payment-rest
+          image: gcr.io/wdmproject23-v2/payment-rest3
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: "512Mi"
-              cpu: "2"
+              memory: "1Gi"
+              cpu: "1"
             requests:
-              memory: "128Mi"
-              cpu: "2"
+              memory: "256Mi"
+              cpu: "1"
           command: ["uvicorn"]
           args: ["--host", "0.0.0.0",
                  "--port", "5001",

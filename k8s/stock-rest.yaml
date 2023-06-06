@@ -16,7 +16,7 @@ kind: Deployment
 metadata:
   name: stock-rest-deployment
 spec:
-  replicas: 3
+  replicas: 5
   selector:
     matchLabels:
       component: stock-rest
@@ -32,16 +32,15 @@ spec:
           resources:
             limits:
               memory: "1Gi"
-              cpu: "3"
+              cpu: "1"
             requests:
               memory: "256Mi"
-              cpu: "3"
-          command: ["gunicorn"]
-          args: [ "-b", "0.0.0.0:5000",
-                    "--workers", "4",
-                    "--worker-class", "uvicorn.workers.UvicornWorker",
-                    "--chdir", "/home/app/src",
-                    "app:app" ]
+              cpu: "1"
+          command: ["uvicorn"]
+          args: ["--host", "0.0.0.0",
+                 "--port", "5000",
+                 "--app-dir", "/home/app/src",
+                 "app:app"]
           ports:
             - containerPort: 5000
           env:
