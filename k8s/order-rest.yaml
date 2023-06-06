@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: order-rest
-          image: gcr.io/wdmproject23-v2/order-rest2
+          image: gcr.io/wdmproject23-v2/order-rest-spanner
           imagePullPolicy: IfNotPresent
           resources:
             limits:

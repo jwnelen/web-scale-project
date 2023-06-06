@@ -5,37 +5,37 @@ services:
     build:
       context: ./
       dockerfile: ./order-rest/Dockerfile
-    image: order-rest2:latest
+    image: order-rest-spanner:latest
 
   order-worker-service:
     build:
       context: ./
       dockerfile: ./order-worker/Dockerfile
-    image: order-worker2:latest
+    image: order-worker-spanner:latest
 
   stock-rest-service:
     build:
       context: ./
       dockerfile: ./stock-rest/Dockerfile
-    image: stock-rest2:latest
+    image: stock-rest-spanner:latest
 
   stock-worker-service:
     build:
       context: ./
       dockerfile: ./stock-worker/Dockerfile
-    image: stock-worker2:latest
+    image: stock-worker-spanner:latest
 
   payment-rest-service:
     build:
       context: ./
       dockerfile: ./payment-rest/Dockerfile
-    image: payment-rest3:latest
+    image: payment-rest-spanner:latest
 
   payment-worker-service:
     build:
       context: ./
       dockerfile: ./payment-worker/Dockerfile
-    image: payment-worker2:latest
+    image: payment-worker-spanner:latest
 
   kafka-admin-service:
     build:
