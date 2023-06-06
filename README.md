@@ -77,7 +77,7 @@ Make sure you have setup the resource limits correctly for your specific k8s clu
 Your computer might not be able to handle the default values.
 
 ### 3. Setup the configmap
-Make sure you have setup the configmap correctly. This is done by the `configmap.yaml` file in the `k8s/dev` folder.
+Make sure you have setup the configmap correctly. This is done by the `config-map.yaml` file in the `k8s/dev` folder.
 
 ### 4. Export the right variables
 Then you can use the `custom-deploy.sh` command. But make sure to update the following values:

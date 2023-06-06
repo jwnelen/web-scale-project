@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: order-worker-deployment
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
       component: order-worker
@@ -45,4 +45,7 @@ spec:
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: "/tmp/keys/keyfile.json"
             - name: GCLOUD_PROJECT
-              value: "wdmproject23-v2"
+              valueFrom:
+                configMapKeyRef:
+                  name: myconfigmap
+                  key: GCLOUD_PROJECT

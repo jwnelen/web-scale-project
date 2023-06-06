@@ -37,6 +37,10 @@ docker push gcr.io/wdmproject23-v2/payment-worker2
 
 cd k8s
 
+kubectl apply -f config-map.yaml
+
+sleep 5
+
 kubectl apply -f zookeeper.yaml
 
 sleep 15
