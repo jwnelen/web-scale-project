@@ -5,3 +5,5 @@ python-dotenv==1.0.0
 requests
 google-cloud-spanner==3.35.0
 kafka-python
+sqlalchemy
+sqlalchemy-spanner
