@@ -4,7 +4,7 @@ from google.cloud.spanner_v1.streamed import StreamedResultSet
 
 class SpannerDB:
     def __init__(self):
-        instance_id = "spanner-db"
+        instance_id = "spanner-instance"
         database_id = "database"
 
         # Instantiate a client.

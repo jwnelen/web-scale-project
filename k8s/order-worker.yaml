@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: order-worker-deployment
 spec:
-  replicas: 1
+  replicas: 4
   selector:
     matchLabels:
       component: order-worker
@@ -31,10 +31,10 @@ spec:
           resources:
             limits:
               memory: "256Mi"
-              cpu: "0.5"
+              cpu: "1"
             requests:
               memory: "128Mi"
-              cpu: "0.5"
+              cpu: "1"
           command: ["python3"]
           args: ["/home/app/src/app.py"]
           ports:
