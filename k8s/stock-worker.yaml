@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: stock-worker-deployment
 spec:
-  replicas: 1
+  replicas: 8
   selector:
     matchLabels:
       component: stock-worker
@@ -26,15 +26,15 @@ spec:
     spec:
       containers:
         - name: stock-worker
-          image: gcr.io/wdmproject23-v2/stock-worker
+          image: gcr.io/wdmproject23-v2/stock-worker2
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: "512Mi"
-              cpu: "1"
+              memory: "256Mi"
+              cpu: "0.5"
             requests:
               memory: "128Mi"
-              cpu: "1"
+              cpu: "0.5"
           command: ["python3"]
           args: ["/home/app/src/app.py"]
           ports:

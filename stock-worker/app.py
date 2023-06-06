@@ -70,7 +70,7 @@ def subtract(payload, db):
 def process_message(message, connector, db):
     payload = json.loads(message.value.decode('utf-8'))
     message_type = payload['message_type']
-
+    print(payload)
     if message_type == "item_create":
         response = create_item(payload, db)
         connector.deliver_response('stock-rest', response)

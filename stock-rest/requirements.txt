@@ -1,6 +1,5 @@
-Flask
-gunicorn
 requests
-kafka-python
-redis
-gevent
+aiokafka
+uvicorn[standard]
+fastapi
+gunicorn

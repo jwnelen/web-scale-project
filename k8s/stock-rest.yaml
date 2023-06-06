@@ -16,7 +16,7 @@ kind: Deployment
 metadata:
   name: stock-rest-deployment
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       component: stock-rest
@@ -27,21 +27,21 @@ spec:
     spec:
       containers:
         - name: stock-rest
-          image: gcr.io/wdmproject23-v2/stock-rest
+          image: gcr.io/wdmproject23-v2/stock-rest2
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: "256Mi"
-              cpu: "2"
+              memory: "1Gi"
+              cpu: "3"
             requests:
-              memory: "32Mi"
-              cpu: "2"
+              memory: "256Mi"
+              cpu: "3"
           command: ["gunicorn"]
-          args: ["-b", "0.0.0.0:5000",
-                 "--workers", "3",
-                 "--worker-class", "gevent",
-                 "--chdir", "/home/app/src",
-                 "app:start()"]
+          args: [ "-b", "0.0.0.0:5000",
+                    "--workers", "4",
+                    "--worker-class", "uvicorn.workers.UvicornWorker",
+                    "--chdir", "/home/app/src",
+                    "app:app" ]
           ports:
             - containerPort: 5000
           env:

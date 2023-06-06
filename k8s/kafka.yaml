@@ -44,10 +44,10 @@ spec:
         resources:
           limits:
             memory: "3Gi"
-            cpu: "2"
+            cpu: "4"
           requests:
-            memory: "2Gi"
-            cpu: "1"
+            memory: "3Gi"
+            cpu: "4"
         name: kafka-broker
         ports:
         - containerPort: 9092

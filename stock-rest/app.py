@@ -1,117 +1,102 @@
 import json
 import os
-import threading
-from time import sleep
+import random
 
 from uuid import uuid4
-from flask import Flask, jsonify, make_response
-from gevent import monkey
+from aiokafka import AIOKafkaConsumer
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
-from backend.kafka_connectior import KafkaConnector
+from backend.kafka_rest_connectior import KafkaRESTConnector
 
-connector = None
-app = Flask("stock-rest-service")
-
-messages = {}
-waiting = {}
+app = FastAPI()
 
 
-def start():
-    monkey.patch_all()
-    global connector
-    connector = KafkaConnector(os.environ['BOOTSTRAP_SERVERS'], None, 'stock-rest')
-    threading.Thread(target=retrieve_response, daemon=True).start()
-    return app
+async def get_response(destination, send_func, payload):
+    consumer = AIOKafkaConsumer(
+        'stock-rest',
+        bootstrap_servers=os.environ['BOOTSTRAP_SERVERS'],
+        group_id=str(random.randint(1, 10000000)))
+
+    await consumer.start()
+    await send_func(payload)
+    try:
+        async for message in consumer:
+            payload = json.loads(message.value.decode('utf-8'))
+            msg_destination = payload['destination']
+
+            if msg_destination == destination:
+                response = payload['data']
+                return response
+    finally:
+        await consumer.stop()
 
 
-def retrieve_response():
-    for message in connector.consumer:
-        payload = json.loads(message.value.decode('utf-8'))
-        destination = payload['destination']
-
-        if destination in waiting:
-            messages[destination] = payload['data']
-            waiting.pop(destination)
-
-
-def get_response(destination):
-    while True:
-        if destination in messages:
-            response = messages[destination]
-            messages.pop(destination)
-            return response
-        sleep(0.01)
-
-
-@app.post('/stock/item/create/<price>')
-def item_create(price: float):
+@app.post('/stock/item/create/{price}')
+async def item_create(price: float):
     destination = f'stock-{str(uuid4())}'
-    waiting[destination] = True
 
     payload = {'data': {'price': float(price)},
                'destination': destination}
 
-    connector.stock_item_create(payload)
+    connector = KafkaRESTConnector()
 
-    response = get_response(destination)
+    response = await get_response(destination, connector.stock_item_create, payload)
 
     if not response:
-        return make_response(jsonify({}), 400)
+        return JSONResponse(content={}, status_code=400)
 
-    return make_response(jsonify(response), 200)
+    return JSONResponse(content=response, status_code=200)
 
 
-@app.get('/stock/find/<item_id>')
-def find(item_id: str):
+@app.get('/stock/find/{item_id}')
+async def find(item_id: str):
     destination = f'stock-{str(uuid4())}'
-    waiting[destination] = True
 
     payload = {'data': {'item_id': item_id},
                'destination': destination}
 
-    connector.stock_find(payload)
+    connector = KafkaRESTConnector()
 
-    response = get_response(destination)
+    response = await get_response(destination, connector.stock_find, payload)
 
     if not response:
-        return make_response(jsonify({}), 400)
+        return JSONResponse(content={}, status_code=400)
 
-    return make_response(jsonify(response), 200)
+    return JSONResponse(content=response, status_code=200)
 
 
-@app.post('/stock/add/<item_id>/<amount>')
-def add(item_id: str, amount: int):
+@app.post('/stock/add/{item_id}/{amount}')
+async def add(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
-    waiting[destination] = True
 
     payload = {'data': {'item_id': item_id,
                         'amount': int(amount)},
                'destination': destination}
 
-    connector.stock_add(payload)
+    connector = KafkaRESTConnector()
 
-    response = get_response(destination)
+    response = await get_response(destination, connector.stock_add, payload)
 
     if not response['success']:
-        return make_response(jsonify({}), 400)
+        return JSONResponse(content={}, status_code=400)
 
-    return make_response(jsonify({}), 200)
+    return JSONResponse(content={}, status_code=200)
 
 
-@app.post('/stock/subtract/<item_id>/<amount>')
-def subtract(item_id: str, amount: int):
+@app.post('/stock/subtract/{item_id}/{amount}')
+async def subtract(item_id: str, amount: int):
     destination = f'stock-{str(uuid4())}'
-    waiting[destination] = True
 
     payload = {'data': {'item_id': item_id,
                         'amount': int(amount)},
                'destination': destination}
 
-    connector.stock_subtract(payload)
+    connector = KafkaRESTConnector()
 
-    response = get_response(destination)
+    response = await get_response(destination, connector.stock_subtract, payload)
 
     if not response['success']:
-        return make_response(jsonify({}), 400)
+        return JSONResponse(content={}, status_code=400)
 
-    return make_response(jsonify({}), 200)
+    return JSONResponse(content={}, status_code=200)

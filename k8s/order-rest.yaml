@@ -31,17 +31,16 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "2"
             requests:
-              memory: "32Mi"
+              memory: "128Mi"
               cpu: "2"
-          command: ["gunicorn"]
-          args: ["-b", "0.0.0.0:5002",
-                 "--workers", "3",
-                 "--worker-class", "gevent",
-                 "--chdir", "/home/app/src",
-                 "app:start()"]
+          command: ["uvicorn"]
+          args: ["--host", "0.0.0.0",
+                 "--port", "5002",
+                 "--app-dir", "/home/app/src",
+                 "app:app"]
           ports:
             - containerPort: 5002
           env:

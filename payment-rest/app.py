@@ -7,7 +7,7 @@ from uuid import uuid4
 from flask import Flask, jsonify, make_response
 from gevent import monkey
 
-from backend.kafka_connectior import KafkaConnector
+from backend.kafka_rest_connectior import KafkaRESTConnector
 
 connector = None
 app = Flask("payment-rest-service")

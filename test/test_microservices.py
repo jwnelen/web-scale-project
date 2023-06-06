@@ -22,8 +22,12 @@ class TestMicroservices(unittest.TestCase):
         item: dict = tu.find_item(item_id)
         print(item)
 
+    def test_create(self):
+        item: dict = tu.create_item(2.3)
+        print(item)
+
     def test_create_item(self):
-        for i in range(64):
+        for i in range(12):
             Thread(target=self.stock_stress).start()
 
     def test_stock(self):

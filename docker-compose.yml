@@ -17,13 +17,13 @@ services:
     build:
       context: ./
       dockerfile: ./stock-rest/Dockerfile
-    image: stock-rest:latest
+    image: stock-rest2:latest
 
   stock-worker-service:
     build:
       context: ./
       dockerfile: ./stock-worker/Dockerfile
-    image: stock-worker:latest
+    image: stock-worker2:latest
 
   payment-rest-service:
     build:
