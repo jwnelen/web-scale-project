@@ -50,10 +50,7 @@ After coding the REST endpoint logic run `docker-compose up --build` in the base
 This setup is for local k8s testing to see if your k8s config works before deploying to the cloud. 
 First deploy your database using helm by running the `deploy-charts-minicube.sh` file (in this example the DB is Redis 
 but you can find any database you want in https://artifacthub.io/ and adapt the script). Then adapt the k8s configuration files in the
-`\k8s` folder to mach your system and then run `kubectl apply -f .` in the k8s folder. 
-
-***Requirements:*** You need to have minikube (with ingress enabled) and helm installed on your machine.
-
+`\k8s` folder to mach your system and then run `kubectl apply -f .` in the k8s folder.
 
 
 #### kubernetes cluster (managed k8s cluster in the cloud)
@@ -62,7 +59,7 @@ Similarly to the `minikube` deployment but run the `deploy-charts-cluster.sh` in
 
 ***Requirements:*** You need to have access to kubectl of a k8s cluster.
 
-#### docker-compose (not working anymore)
+#### ~~docker-compose (not working anymore)~~
 Docker compose cannot be used anymore. The docker compose fill is still being used to build all images.
 
 ### How to Deploy
@@ -78,4 +75,11 @@ In **GCP Kubernetes**, it is managed by Google.
 Make sure you have setup the resource limits correctly for your specific k8s cluster if you are running it locally. 
 Your computer might not be able to handle the default values.
 
+### 3. Setup the configmap
+Make sure you have setup the configmap correctly. This is done by the `configmap.yaml` file in the `k8s/dev` folder.
+
+
+### 4. Have a place for the docker images
+Make sure you have a place for the docker images. This can be done by a docker registry or by a local docker registry.
+This is defined in the `deploy.sh`, so remember to update those values.
 
