@@ -47,17 +47,18 @@ After coding the REST endpoint logic run `docker-compose up --build` in the base
 
 #### minikube (local k8s cluster)
 
-This setup is for local k8s testing to see if your k8s config works before deploying to the cloud. 
-First deploy your database using helm by running the `deploy-charts-minicube.sh` file (in this example the DB is Redis 
-but you can find any database you want in https://artifacthub.io/ and adapt the script). Then adapt the k8s configuration files in the
-`\k8s` folder to mach your system and then run `kubectl apply -f .` in the k8s folder.
-
 
 #### kubernetes cluster (managed k8s cluster in the cloud)
+Our deployment is done by a kubernetes cluster, that can connect to Google Spanner. Other k8s clusters can be used, but GCP is the easiest.
+For this, create an account on GCP and create a project.
 
-Similarly to the `minikube` deployment but run the `deploy-charts-cluster.sh` in the helm step to also install an ingress to the cluster. 
+***Requirements:*** 
+1. You need to have access to kubectl of a k8s cluster. 
+2. Your docker deamon needs to run.
+3. If you are indeed using the gcloud kubectl, make sure you have the right access to the cluster in your local terminal.
 
-***Requirements:*** You need to have access to kubectl of a k8s cluster.
+If you have done all the steps from below, you can run the `custom-deploy.sh` script. 
+This will deploy the entire system to the k8s cluster.
 
 #### ~~docker-compose (not working anymore)~~
 Docker compose cannot be used anymore. The docker compose fill is still being used to build all images.
@@ -78,8 +79,16 @@ Your computer might not be able to handle the default values.
 ### 3. Setup the configmap
 Make sure you have setup the configmap correctly. This is done by the `configmap.yaml` file in the `k8s/dev` folder.
 
+### 4. Export the right variables
+Then you can use the `custom-deploy.sh` command. But make sure to update the following values:
+- `export CLUSTER_NAME=app-cluster`
+- `export PROJECT_ID=app-project`
+- `export REGION=europe-west4`
+- `export CONTEXT_NAME=gke_${PROJECT_ID}_${REGION}_${CLUSTER_NAME}` (or change this to where your images are stored)
 
-### 4. Have a place for the docker images
+These values will be used in the `custom-deploy.sh`
+
+### 5. Have a place for the docker images
 Make sure you have a place for the docker images. This can be done by a docker registry or by a local docker registry.
 This is defined in the `deploy.sh`, so remember to update those values.
 
