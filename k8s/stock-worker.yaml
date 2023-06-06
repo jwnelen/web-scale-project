@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: stock-worker-service
+spec:
+  selector:
+    component: stock-worker
+  ports:
+    - port: 5000
+      name: http
+      targetPort: 5000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock-worker-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      component: stock-worker
+  template:
+    metadata:
+      labels:
+        component: stock-worker
+    spec:
+      containers:
+        - name: stock-worker
+          image: gcr.io/wdmproject23-v2/stock-worker2
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "0.5"
+            requests:
+              memory: "128Mi"
+              cpu: "0.5"
+          command: ["python3"]
+          args: ["/home/app/src/app.py"]
+          ports:
+            - containerPort: 5000
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: kafka-service:9092
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/tmp/keys/keyfile.json"
+            - name: GCLOUD_PROJECT
+              value: "wdmproject23-v2"

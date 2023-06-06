@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-admin
+spec:
+  selector:
+    component: kafka-admin
+  ports:
+    - port: 5000
+      name: http
+      targetPort: 5000
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-admin-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: kafka-admin
+  template:
+    metadata:
+      labels:
+        component: kafka-admin
+    spec:
+      containers:
+        - name: kafka-admin
+          image: gcr.io/wdmproject23-v2/kafka-admin
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "0.2"
+          command: ["python3"]
+          args: ["/home/app/src/app.py"]
+          ports:
+            - containerPort: 5000
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: kafka-service:9092

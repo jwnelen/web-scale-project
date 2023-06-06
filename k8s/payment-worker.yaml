@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-worker-service
+spec:
+  selector:
+    component: payment-worker
+  ports:
+    - port: 5001
+      name: http
+      targetPort: 5001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-worker-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      component: payment-worker
+  template:
+    metadata:
+      labels:
+        component: payment-worker
+    spec:
+      containers:
+        - name: payment-worker
+          image: gcr.io/wdmproject23-v2/payment-worker2
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "0.5"
+            requests:
+              memory: "128Mi"
+              cpu: "0.5"
+          command: ["python3"]
+          args: ["/home/app/src/app.py"]
+          ports:
+            - containerPort: 5001
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: kafka-service:9092
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/tmp/keys/keyfile.json"
+            - name: GCLOUD_PROJECT
+              value: "wdmproject23-v2"

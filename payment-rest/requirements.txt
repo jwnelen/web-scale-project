@@ -1,0 +1,4 @@
+requests
+aiokafka
+uvicorn[standard]
+fastapi

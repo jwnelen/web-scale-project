@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-rest-service
+spec:
+  selector:
+    component: order-rest
+  ports:
+    - port: 5002
+      name: http
+      targetPort: 5002
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-rest-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      component: order-rest
+  template:
+    metadata:
+      labels:
+        component: order-rest
+    spec:
+      containers:
+        - name: order-rest
+          image: gcr.io/wdmproject23-v2/order-rest2
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+            requests:
+              memory: "256Mi"
+              cpu: "1"
+          command: ["uvicorn"]
+          args: ["--host", "0.0.0.0",
+                 "--port", "5002",
+                 "--app-dir", "/home/app/src",
+                 "app:app"]
+          ports:
+            - containerPort: 5002
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: kafka-service:9092

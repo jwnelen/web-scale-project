@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-rest-service
+spec:
+  selector:
+    component: payment-rest
+  ports:
+    - port: 5001
+      name: http
+      targetPort: 5001
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-rest-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      component: payment-rest
+  template:
+    metadata:
+      labels:
+        component: payment-rest
+    spec:
+      containers:
+        - name: payment-rest
+          image: gcr.io/wdmproject23-v2/payment-rest3
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+            requests:
+              memory: "256Mi"
+              cpu: "1"
+          command: ["uvicorn"]
+          args: ["--host", "0.0.0.0",
+                 "--port", "5001",
+                 "--app-dir", "/home/app/src",
+                 "app:app"]
+          ports:
+            - containerPort: 5001
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: kafka-service:9092
