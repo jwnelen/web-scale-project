@@ -13,14 +13,14 @@ kubectl config use-context "$CONTEXT_NAME"
 
 docker-compose build
 
-docker tag kafka-admin gcr.io/"$PROJECT_ID"/kafka-admin:latest
-docker push gcr.io/"$PROJECT_ID"/kafka-admin:latest
+docker tag kafka-admin gcr.io/"$PROJECT_ID"/kafka-admin
+docker push gcr.io/"$PROJECT_ID"/kafka-admin
 
-docker tag order-rest gcr.io/"$PROJECT_ID"/order-rest:latest
-docker push gcr.io/"$PROJECT_ID"/order-rest:latest
+docker tag order-rest2 gcr.io/"$PROJECT_ID"/order-rest2
+docker push gcr.io/"$PROJECT_ID"/order-rest2
 
-docker tag order-worker gcr.io/"$PROJECT_ID"/order-worker:latest
-docker push gcr.io/"$PROJECT_ID"/order-worker:latest
+docker tag order-worker2 gcr.io/"$PROJECT_ID"/order-worker2
+docker push gcr.io/"$PROJECT_ID"/order-worker2
 
 docker tag stock-rest2 gcr.io/"$PROJECT_ID"/stock-rest2
 docker push gcr.io/"$PROJECT_ID"/stock-rest2
@@ -28,11 +28,11 @@ docker push gcr.io/"$PROJECT_ID"/stock-rest2
 docker tag stock-worker2 gcr.io/"$PROJECT_ID"/stock-worker2
 docker push gcr.io/"$PROJECT_ID"/stock-worker2
 
-docker tag payment-rest gcr.io/"$PROJECT_ID"/payment-rest:latest
-docker push gcr.io/"$PROJECT_ID"/payment-rest:latest
+docker tag payment-rest3 gcr.io/"$PROJECT_ID"/payment-rest3
+docker push gcr.io/"$PROJECT_ID"/payment-rest3
 
-docker tag payment-worker gcr.io/"$PROJECT_ID"/payment-worker:latest
-docker push gcr.io/"$PROJECT_ID"/payment-worker:latest
+docker tag payment-worker2 gcr.io/"$PROJECT_ID"/payment-worker2
+docker push gcr.io/"$PROJECT_ID"/payment-worker2
 
 
 cd k8s
