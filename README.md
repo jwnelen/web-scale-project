@@ -6,6 +6,20 @@
 2. Jeroen Nelen, 
 3. Raphael Frühwirth
 
+### Group Contributions
+1. Remy Duijsens: Kafka, Async REST API, part of kubernetes deployment and cloud environment.
+2. Jeroen Nelen: Research into database technologies, Cloud Spanner implementation.
+3. Raphael Frühwirth: Redis Implementation, Research into database technologies.
+
+Shared contributions: A lot of meetings, a lot of code sessions, research into different web technologies, fine tuning the 
+
+### Tech Stack
+- Kafka Event-Driven Architecture
+- FastAPI + uvicorn async rest api
+- AIOKafka async kafka clients
+- Google Spanner database
+- Python worker nodes
+
 
 ### Project structure
 * `/backend`\
