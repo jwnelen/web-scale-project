@@ -49,7 +49,7 @@ async def create_user():
     return JSONResponse(content=response, status_code=200)
 
 
-@app.get('/payment/find_user/{user_id')
+@app.get('/payment/find_user/{user_id}')
 async def find_user(user_id: str):
     destination = f'payment-{str(uuid4())}'
 
