@@ -1,36 +1,46 @@
-# Web-scale Data Management Project Template
+# Web-scale Data Management Project
 
-Basic project structure with Python's Flask and Redis. 
-**You are free to use any web framework in any language and any database you like for this project.**
+### Group Info
+**Group 3:**
+1. Remy Duijsens, 
+2. Jeroen Nelen, 
+3. Raphael Frühwirth
+
 
 ### Project structure
-
-* `env`
-    Folder containing the Redis env variables for the docker-compose deployment
+* `/backend`\
+    This created the connectors that are being used by Kafka. It also contains the logic for the Kafka consumers and producers.
     
-* `helm-config` 
-   Helm chart values for Redis and ingress-nginx
-        
-* `k8s`
+* `/kafka-admin`\
+    The admin for the Kafka server. This is used for the topic creation.
+
+* `/k8s`\
     Folder containing the kubernetes deployments, apps and services for the ingress, order, payment and stock services.
-    
-* `order`
-    Folder containing the order application logic and dockerfile. 
-    
-* `payment`
-    Folder containing the payment application logic and dockerfile. 
 
-* `stock`
-    Folder containing the stock application logic and dockerfile. 
+* `/k8s/dev`\
+    This is the file that contains the configmap. These are values that are being used within the k8s cluster.
+    These should be updated when the cluster is being deployed.
+    
+* `/{order, payment, stock}-rest`\
+    This is the REST API for the order, payment and stock services. They are responsible for handling the incoming requests. 
+    This is done by a FASTAPI server.
+    
+* `/{order, payment, stock}-worker`\
+    These are the workers, that connect to Spanner. They will return the requested value back to the REST API of that service.
 
-* `test`
-    Folder containing some basic correctness tests for the entire system. (Feel free to enhance them)
+* `/test`\
+    Folder containing some basic correctness tests for the entire system.
+
+### Database: Google Spanner
+For the database, we have implemented Spanner. This is a distributed database that is being managed by Google.
+
+## deployment
 
 ### Deployment types:
 
 #### docker-compose (local development)
 
-After coding the rest endpoint logic run `docker-compose up --build` in the base folder to test if your logic is correct
+After coding the REST endpoint logic run `docker-compose up --build` in the base folder to test if your logic is correct
 (you can use the provided tests in the `\test` folder and change them as you wish). 
 
 ***Requirements:*** You need to have docker and docker-compose installed on your machine.
@@ -44,8 +54,28 @@ but you can find any database you want in https://artifacthub.io/ and adapt the 
 
 ***Requirements:*** You need to have minikube (with ingress enabled) and helm installed on your machine.
 
+
+
 #### kubernetes cluster (managed k8s cluster in the cloud)
 
 Similarly to the `minikube` deployment but run the `deploy-charts-cluster.sh` in the helm step to also install an ingress to the cluster. 
 
 ***Requirements:*** You need to have access to kubectl of a k8s cluster.
+
+#### docker-compose (not working anymore)
+Docker compose cannot be used anymore. The docker compose fill is still being used to build all images.
+
+### How to Deploy
+For deployment, a few things need to be done in order to get the system up and running.
+
+### 1. Make sure you have the right access to Spanner
+Make sure you have the right access to Spanner. For this, you need to have a service account with the right permissions.
+If you are using **minikube**, you need to have a json file with the credentials in your home folder. For this, have a key jsonfile ready.
+Call this file `keyfile.json` and place it in your home folder. This will be mounted to the container and used for authentication.
+In **GCP Kubernetes**, it is managed by Google.
+
+### 2. Make sure you have setup the resource limits correctly for your specific k8s cluster
+Make sure you have setup the resource limits correctly for your specific k8s cluster if you are running it locally. 
+Your computer might not be able to handle the default values.
+
+
