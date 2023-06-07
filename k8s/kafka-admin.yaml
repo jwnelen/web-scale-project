@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: kafka-admin
-          image: gcr.io/wdmproject23-v2/kafka-admin
+          image: gcr.io/wdmproject23-v2/kafka-admin-final
           imagePullPolicy: IfNotPresent
           resources:
             limits:

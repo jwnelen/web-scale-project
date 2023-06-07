@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: payment-worker-deployment
 spec:
-  replicas: 6
+  replicas: 12
   selector:
     matchLabels:
       component: payment-worker

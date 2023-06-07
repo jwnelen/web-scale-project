@@ -13,8 +13,8 @@ kubectl config use-context "$CONTEXT_NAME"
 
 docker-compose build
 
-docker tag kafka-admin gcr.io/"$PROJECT_ID"/kafka-admin
-docker push gcr.io/"$PROJECT_ID"/kafka-admin
+docker tag kafka-admin-final gcr.io/"$PROJECT_ID"/kafka-admin-final
+docker push gcr.io/"$PROJECT_ID"/kafka-admin-final
 
 docker tag order-rest-final gcr.io/"$PROJECT_ID"/order-rest-final
 docker push gcr.io/"$PROJECT_ID"/order-rest-final

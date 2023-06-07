@@ -13,8 +13,8 @@ kubectl config use-context gke_wdmproject23-v2_europe-west4_app-cluster
 
 docker-compose build
 
-docker tag kafka-admin gcr.io/wdmproject23-v2/kafka-admin:latest
-docker push gcr.io/wdmproject23-v2/kafka-admin:latest
+docker tag kafka-admin-final gcr.io/wdmproject23-v2/kafka-admin-final
+docker push gcr.io/wdmproject23-v2/kafka-admin-final
 
 docker tag order-rest-final gcr.io/wdmproject23-v2/order-rest-final
 docker push gcr.io/wdmproject23-v2/order-rest-final

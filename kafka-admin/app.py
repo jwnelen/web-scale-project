@@ -16,8 +16,9 @@ def main():
 
     admin_client = KafkaAdminClient(bootstrap_servers=bootstrap_servers, api_version=(0, 10, 2))
 
-    topic_partitions = {'stock-worker': NewPartitions(total_count=10),
-                        'payment-worker': NewPartitions(total_count=10)
+    topic_partitions = {'stock-worker': NewPartitions(total_count=20),
+                        'payment-worker': NewPartitions(total_count=20),
+                        'order-worker': NewPartitions(total_count=20)
                         }
 
     admin_client.create_partitions(topic_partitions)

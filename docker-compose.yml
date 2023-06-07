@@ -41,4 +41,4 @@ services:
     build:
       context: ./
       dockerfile: ./kafka-admin/Dockerfile
-    image: kafka-admin:latest
+    image: kafka-admin-final:latest

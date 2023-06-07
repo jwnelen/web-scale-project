@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: stock-worker-deployment
 spec:
-  replicas: 6
+  replicas: 16
   selector:
     matchLabels:
       component: stock-worker
